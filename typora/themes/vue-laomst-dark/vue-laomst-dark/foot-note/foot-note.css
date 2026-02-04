@@ -1,0 +1,5 @@
+/* 脚注的样式 - 暗黑模式 */
+#write .md-footnote {
+    background-color: #2d2d2d;
+    color: #ce9178;
+}

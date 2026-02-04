@@ -1,0 +1,138 @@
+/* 字体 */
+@import 'vue-laomst-dark/font-family/font-family.css';
+/* 标题样式 */
+@import './vue-laomst-dark/headline/headline.css';
+/* 引用块 */
+@import './vue-laomst-dark/blockquote/blockquote.css';
+/* 代码块 */
+@import './vue-laomst-dark/code-block/code-block.css';
+/* 单行代码 */
+@import './vue-laomst-dark/code-line/code-line.css';
+/* 列表 */
+@import './vue-laomst-dark/ul-ol/ul-ol.css';
+/* 表格 */
+@import './vue-laomst-dark/table/table.css';
+/* 超链接 */
+@import './vue-laomst-dark/a/a.css';
+/* 脚注 */
+@import './vue-laomst-dark/foot-note/foot-note.css';
+/* 大纲 */
+@import './vue-laomst-dark/outline/outline.css';
+/* 高亮 */
+@import './vue-laomst-dark/heigh-light/heigh-light.css';
+
+:root {
+    --select-text-bg-color: #6D92F9;
+    --side-bar-bg-color: #1e1e1e;
+    --control-text-color: #c5c5c5;
+    --my-favorate-fonts: 'Monaco', 'Monaco Nert Font','PingFang SC', 'Microsoft YaHei', monospace;
+    --bg-color: #1e1e1e;
+    --text-color: #d4d4d4;
+    --border-color: #3c3c3c;
+    --accent-color: #42b983;
+}
+
+html {
+    font-size: 17px;
+}
+
+body {
+    font-family: var(--my-favorate-fonts), serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6rem;
+    letter-spacing: 0;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+.typora-node #write {
+    min-height: unset;
+}
+
+#write {
+    max-width: 80%;
+    margin: 0 auto 60vh;
+    word-spacing: 2px;
+    letter-spacing: 2px;
+    padding-bottom: unset;
+    min-height: unset !important;
+    border-bottom: solid;
+}
+
+#write::after {
+    content: "文章结尾";
+    position: absolute;
+    font-size: 12px;
+    left: calc(50% - 24px);
+    background-color: #3c3c3c;
+    color: #d4d4d4;
+    border-radius: 0 0 7px 7px;
+    padding: 0 12px;
+    margin-top: 3px;
+    height: auto;
+    line-height: 20px;
+}
+
+#write>p:first-child:empty {
+    position: static;
+}
+
+#write p {
+    line-height: 1.6rem;
+    word-spacing: .05rem;
+}
+
+/* 最后一个提示框渲染成文章引用，要求所有文章格式都固定成这样 */
+#write>div:last-of-type.md-alert[mdtype="blockquote"] {
+    background-color: #1a2a25;
+    border-top: solid var(--accent-color);
+    margin-left: -30px;
+    margin-right: -30px;
+    border-left: unset;
+    margin-bottom: unset;
+    padding-bottom: 1rem;
+}
+
+#write>div:last-of-type.md-alert[mdtype="blockquote"] .md-alert-text-container::after {
+    content: "references";
+}
+
+#write>div:last-of-type.md-alert[mdtype="blockquote"]::before {
+    content: "文章引用";
+    position: absolute;
+    font-size: 12px;
+    left: calc(50% - 24px);
+    background-color: #3c3c3c;
+    color: #d4d4d4;
+    border-radius: 0 0 7px 7px;
+    padding: 0 12px;
+    margin-top: unset;
+    height: auto;
+    line-height: 20px;
+}
+
+#write>div:last-of-type.md-alert[mdtype="blockquote"]>:last-child {
+    margin-bottom: unset !important;
+}
+
+/* mermaid预览框位置调整 */
+pre.md-fences-advanced.md-focus .md-fences-adv-panel{
+    position: unset;
+}
+
+@media print {
+    html {
+        font-size: 13px;
+    }
+
+    table,
+    pre {
+        page-break-inside: avoid;
+    }
+
+    pre {
+        word-wrap: break-word;
+    }
+}

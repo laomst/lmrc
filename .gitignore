@@ -1,0 +1,6 @@
+.idea/
+.DS_Store
+
+# 本地环境变量配置文件（不提交到仓库）
+zsh/exports.zsh
+bash/exports.sh

@@ -1,0 +1,5 @@
+{
+  "keyBinding": {
+    "Select Line / Sentence": "Ctrl+Shift+A" //选中当前行
+  }
+}

@@ -1,0 +1,68 @@
+#outline-content {
+    counter-reset: outline-h1
+}
+
+#outline-content .outline-h1 {
+    counter-reset: outline-h2 outline-h3 outline-h4 outline-h5 outline-h6
+}
+
+#outline-content .outline-h2 {
+    counter-reset: outline-h3 outline-h4 outline-h5 outline-h6
+}
+
+#outline-content .outline-h3 {
+    counter-reset: outline-h4 outline-h5 outline-h6
+}
+
+#outline-content .outline-h4 {
+    counter-reset: outline-h5 outline-h6
+}
+
+#outline-content .outline-h5 {
+    counter-reset: outline-h6
+}
+
+#outline-content li.outline-h1 span.outline-label:before {
+    counter-increment: outline-h1;
+    content: "H1:" counter(outline-h1) ""
+}
+
+#outline-content li.outline-h2 span.outline-label:before {
+    counter-increment: outline-h2;
+    content: "H2:" counter(outline-h1) "." counter(outline-h2) ""
+}
+
+#outline-content li.outline-h3 span.outline-label:before {
+    counter-increment: outline-h3;
+    content: "H3:" counter(outline-h1) "." counter(outline-h2) "." counter(outline-h3) ""
+}
+
+#outline-content li.outline-h4 span.outline-label:before {
+    counter-increment: outline-h4;
+    content: "H4:" counter(outline-h1) "." counter(outline-h2) "." counter(outline-h3) "." counter(outline-h4) ""
+}
+
+#outline-content li.outline-h5 span.outline-label:before {
+    counter-increment: outline-h5;
+    content: "H5:" counter(outline-h1) "." counter(outline-h2) "." counter(outline-h3) "." counter(outline-h4) "." counter(outline-h5) ""
+}
+
+#outline-content li.outline-h6 span.outline-label:before {
+    counter-increment: outline-h6;
+    content: "H6:" counter(outline-h1) "." counter(outline-h2) "." counter(outline-h3) "." counter(outline-h4) "." counter(outline-h5) "." counter(outline-h6) ""
+}
+
+#outline-content li.outline-h1 span.outline-label:before,
+#outline-content li.outline-h2 span.outline-label:before,
+#outline-content li.outline-h3 span.outline-label:before,
+#outline-content li.outline-h4 span.outline-label:before,
+#outline-content li.outline-h5 span.outline-label:before,
+#outline-content li.outline-h6 span.outline-label:before {
+    background-color: #42b983;
+    margin-right: 5px;
+    color: #1e1e1e;
+    font-weight: bold;
+    border-radius: 3px;
+    vertical-align: baseline;
+    padding: 1px;
+}
