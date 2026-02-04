@@ -1,28 +1,20 @@
 #!/bin/zsh
 # PATH 环境变量配置
+#
+# 机器相关的环境变量（SDK_HOME_DIR、JAVA_HOME、MAVEN_HOME、PYTHON_HOME 等）
+# 应在 exports.zsh 中定义，此处使用默认值作为后备
 
-# 定义 SDK 根目录
-SDK_HOME_DIR="/Library"
-
-# JAVA 配置
-export JAVA8_HOME="$SDK_HOME_DIR/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home"
-export JAVA21_HOME="$SDK_HOME_DIR/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home"
-export JAVA_HOME="$JAVA21_HOME"
-
-# Maven 配置
-export MAVEN_HOME="$SDK_HOME_DIR/apache-maven-3.6.3"
-
-# Python 配置
-export PYTHON_HOME="/Library/Frameworks/Python.framework/Versions/3.13"
+# 默认 SDK 根目录（可通过 exports.zsh 覆盖）
+: ${SDK_HOME_DIR:=/Library}
 
 # 自定义路径（按优先级排序）
 typeset -a CUSTOM_PATHS
 CUSTOM_PATHS=(
   "$HOME/.local/bin"
-  "$MAVEN_HOME/bin"
-  "$JAVA_HOME/bin"
-  "$PYTHON_HOME/bin"
-  "/opt/homebrew/bin"
+  "${MAVEN_HOME:+$MAVEN_HOME/bin}"
+  "${JAVA_HOME:+$JAVA_HOME/bin}"
+  "${PYTHON_HOME:+$PYTHON_HOME/bin}"
+  "${HOMEBREW_PREFIX:-/opt/homebrew}/bin"
 )
 
 # 将自定义路径添加到 PATH 前面（数组靠前的元素优先级更高）
