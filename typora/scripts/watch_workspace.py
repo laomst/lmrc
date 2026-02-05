@@ -35,14 +35,12 @@ Typora 工作空间文件监控服务
 
 import argparse
 import atexit
-import json
 import logging
 import os
 import sys
 import time
-import threading
 from pathlib import Path
-from typing import Optional, Set
+from typing import Optional
 
 # 环境变量名称
 TYPORA_WORKSPACE_ENV = 'TYPORA_WORKSPACE'
@@ -77,27 +75,17 @@ def get_log_file_path(log_type: str = 'log') -> str:
 # 导入索引模块
 try:
     from index_typora_markdowns import (
-        add_front_matter_to_file,
-        calculate_file_relative_path,
-        get_index_file_path,
-        read_index_file,
-        write_index_file,
+        index_or_update_file,
+        remove_from_index,
         TYPORA_WORKSPACE_ENV,
-        collect_markdown_files,
-        verify_and_fix_index
     )
 except ImportError:
     # 如果导入失败，尝试从同一目录导入
     sys.path.insert(0, os.path.dirname(__file__))
     from index_typora_markdowns import (
-        add_front_matter_to_file,
-        calculate_file_relative_path,
-        get_index_file_path,
-        read_index_file,
-        write_index_file,
+        index_or_update_file,
+        remove_from_index,
         TYPORA_WORKSPACE_ENV,
-        collect_markdown_files,
-        verify_and_fix_index
     )
 
 # 导入 watchdog（如果不可用会在 main 时报错）
@@ -107,83 +95,6 @@ try:
 except ImportError:
     Observer = None
     FileSystemEventHandler = None
-
-
-class Debounce:
-    """
-    防抖机制：同一文件在短时间内多次触发事件时，只执行最后一次
-
-    用途：文件保存/编辑会触发多次 on_modified，需要合并
-    """
-
-    def __init__(self, delay: float = 1.0):
-        """
-        Args:
-            delay: 防抖延迟时间（秒），同一文件在此时间内多次变化只处理一次
-        """
-        self.delay = delay
-        self.pending_files: Set[str] = set()
-        self.timers: dict[str, threading.Timer] = {}
-        self.lock = threading.Lock()
-        self.callback = None
-        self.logger = self._setup_logger()
-
-    def _setup_logger(self) -> logging.Logger:
-        """设置日志"""
-        logger = logging.getLogger('debounce')
-        logger.setLevel(logging.DEBUG)
-        return logger
-
-    def set_callback(self, callback):
-        """设置处理回调函数"""
-        self.callback = callback
-
-    def trigger(self, file_path: str):
-        """
-        触发文件变化事件
-
-        Args:
-            file_path: 发生变化的文件路径
-        """
-        with self.lock:
-            # 如果已有定时器，取消它
-            if file_path in self.timers:
-                self.timers[file_path].cancel()
-
-            # 创建新的定时器
-            timer = threading.Timer(self.delay, self._execute, args=[file_path])
-            self.timers[file_path] = timer
-            timer.start()
-
-            self.logger.debug(f'防抖触发: {file_path} (延迟 {self.delay}s)')
-
-    def _execute(self, file_path: str):
-        """执行回调（延迟后）"""
-        with self.lock:
-            # 清理定时器
-            if file_path in self.timers:
-                del self.timers[file_path]
-
-            self.logger.debug(f'防抖执行: {file_path}')
-
-        if self.callback:
-            self.callback(file_path)
-
-    def flush_all(self):
-        """立即执行所有待处理的文件"""
-        with self.lock:
-            files = list(self.timers.keys())
-            for file_path in files:
-                self.timers[file_path].cancel()
-                del self.timers[file_path]
-
-        for file_path in files:
-            self._execute(file_path)
-
-    def wait(self):
-        """等待所有待处理的任务完成"""
-        while self.timers:
-            time.sleep(0.1)
 
 
 def setup_logger(log_to_file: bool = True) -> logging.Logger:
@@ -282,29 +193,18 @@ setup_logger()
 
 
 class MarkdownEventHandler:
-    """Markdown 文件事件处理器"""
+    """Markdown 文件事件处理器（仅处理文件路径变化）"""
 
-    def __init__(self, workspace_path: str, debounce: Debounce):
+    def __init__(self, workspace_path: str):
         """
         Args:
             workspace_path: 工作空间路径
-            debounce: 防抖实例
         """
         self.workspace_path = os.path.abspath(workspace_path)
-        self.debounce = debounce
-        self.index_path = get_index_file_path(self.workspace_path)
 
     def is_markdown_file(self, path: str) -> bool:
         """检查是否为 Markdown 文件"""
         return path.endswith('.md')
-
-    def is_in_workspace(self, path: str) -> bool:
-        """检查文件是否在工作空间内"""
-        try:
-            abs_path = os.path.abspath(path)
-            return abs_path.startswith(self.workspace_path + os.sep) or abs_path == self.workspace_path
-        except Exception:
-            return False
 
     def handle_created(self, file_path: str):
         """处理新建文件"""
@@ -314,7 +214,7 @@ class MarkdownEventHandler:
         get_logger().info(f'检测到新建文件: {file_path}')
 
         try:
-            modified = add_front_matter_to_file(file_path, self.workspace_path)
+            modified = index_or_update_file(self.workspace_path, file_path)
             if modified:
                 get_logger().info(f'  ✓ 已添加 front matter 和索引')
             else:
@@ -331,10 +231,10 @@ class MarkdownEventHandler:
 
         try:
             # 先从索引中移除旧路径
-            self._remove_from_index(src_path)
+            remove_from_index(self.workspace_path, src_path)
 
             # 为新路径添加 front matter（会更新 serial 的路径）
-            modified = add_front_matter_to_file(dest_path, self.workspace_path)
+            modified = index_or_update_file(self.workspace_path, dest_path)
             if modified:
                 get_logger().info(f'  ✓ 已更新索引')
             else:
@@ -350,57 +250,13 @@ class MarkdownEventHandler:
         get_logger().info(f'检测到删除文件: {file_path}')
 
         try:
-            removed = self._remove_from_index(file_path)
+            removed = remove_from_index(self.workspace_path, file_path)
             if removed:
                 get_logger().info(f'  ✓ 已从索引中移除')
             else:
                 get_logger().info(f'  - 文件不在索引中')
         except Exception as e:
             get_logger().error(f'  ✗ 处理失败: {e}')
-
-    def handle_modified(self, file_path: str):
-        """处理文件修改（通过防抖）"""
-        if not self.is_markdown_file(file_path):
-            return
-
-        get_logger().debug(f'检测到文件修改: {file_path}')
-        # 使用防抖，延迟处理
-        self.debounce.trigger(file_path)
-
-    def handle_modified_final(self, file_path: str):
-        """防抖后的最终处理"""
-        get_logger().info(f'处理文件修改: {file_path}')
-
-        try:
-            modified = add_front_matter_to_file(file_path, self.workspace_path)
-            if modified:
-                get_logger().info(f'  ✓ 已更新 front matter')
-            else:
-                get_logger().info(f'  - 跳过（无需更新）')
-        except Exception as e:
-            get_logger().error(f'  ✗ 处理失败: {e}')
-
-    def _remove_from_index(self, file_path: str) -> bool:
-        """从索引中移除文件"""
-        index_data = read_index_file(self.index_path)
-
-        # 查找并移除该文件的索引
-        removed = False
-        to_delete = []
-        for serial, path in index_data.items():
-            abs_index_path = os.path.join(self.workspace_path, path.lstrip('/'))
-            if os.path.abspath(abs_index_path) == os.path.abspath(file_path):
-                to_delete.append(serial)
-                removed = True
-
-        for serial in to_delete:
-            del index_data[serial]
-            get_logger().debug(f'  从索引移除 serial: {serial}')
-
-        if removed:
-            write_index_file(self.index_path, index_data)
-
-        return removed
 
 
 def write_pid_file(pid: int):
@@ -475,11 +331,10 @@ def create_observer():
 
 
 class WatchdogEventHandler(FileSystemEventHandler):
-    """watchdog 事件处理器适配器"""
+    """watchdog 事件处理器适配器（仅处理文件路径变化）"""
 
-    def __init__(self, handler: MarkdownEventHandler, debounce: Debounce):
+    def __init__(self, handler: MarkdownEventHandler):
         self.handler = handler
-        self.debounce = debounce
 
     def on_created(self, event):
         if not event.is_directory:
@@ -492,10 +347,6 @@ class WatchdogEventHandler(FileSystemEventHandler):
     def on_deleted(self, event):
         if not event.is_directory:
             self.handler.handle_deleted(event.src_path)
-
-    def on_modified(self, event):
-        if not event.is_directory:
-            self.handler.handle_modified(event.src_path)
 
 
 def main():
@@ -532,19 +383,6 @@ def main():
         '--no-log-file',
         action='store_true',
         help='不写入日志文件'
-    )
-
-    parser.add_argument(
-        '--debounce-delay',
-        type=float,
-        default=1.0,
-        help='防抖延迟时间（秒），默认 1.0'
-    )
-
-    parser.add_argument(
-        '--verify-index',
-        action='store_true',
-        help='验证并修复索引（不启动监控）'
     )
 
     parser.add_argument(
@@ -593,21 +431,6 @@ def main():
     if not os.path.isdir(workspace):
         get_logger().error(f'工作空间路径不存在: {workspace}')
         sys.exit(1)
-
-    # 处理 --verify-index（仅验证索引，不启动监控）
-    if args.verify_index:
-        get_logger().info(f'工作空间: {workspace}')
-        get_logger().info('开始验证并修复索引...\n')
-        stats = verify_and_fix_index(workspace, auto_fix=True)
-        get_logger().info('\n验证完成:')
-        get_logger().info(f'  已验证: {stats["verified"]} 个文件')
-        get_logger().info(f'  已修复: {stats["fixed"]} 个路径')
-        get_logger().info(f'  已移除: {stats["removed"]} 个无效索引')
-        if stats['errors']:
-            get_logger().warning(f'  发现 {len(stats["errors"])} 个错误:')
-            for error in stats['errors']:
-                get_logger().warning(f'    - {error}')
-        sys.exit(0)
 
     # 处理 --clean-logs（仅清理日志，不启动监控）
     if args.clean_logs:
@@ -660,18 +483,12 @@ def main():
     get_logger().info(f'当前日志: {os.path.basename(get_log_file_path())}')
     get_logger().info('')
 
-    # 创建防抖实例
-    debounce = Debounce(delay=args.debounce_delay)
-
     # 创建事件处理器
-    md_handler = MarkdownEventHandler(workspace, debounce)
-
-    # 设置防抖回调
-    debounce.set_callback(md_handler.handle_modified_final)
+    md_handler = MarkdownEventHandler(workspace)
 
     # 创建 watchdog 事件处理器和观察者
     ObserverClass = create_observer()
-    watchdog_handler = WatchdogEventHandler(md_handler, debounce)
+    watchdog_handler = WatchdogEventHandler(md_handler)
 
     # 创建观察者
     observer = ObserverClass()
@@ -683,17 +500,6 @@ def main():
         clean_old_logs(args.log_retention)
     except Exception as e:
         get_logger().error(f'日志清理失败: {e}')
-
-    # 启动前验证索引完整性
-    get_logger().info('验证索引完整性...')
-    try:
-        stats = verify_and_fix_index(workspace, auto_fix=True)
-        if stats['fixed'] > 0 or stats['removed'] > 0:
-            get_logger().info(f'索引修复完成: 已验证 {stats["verified"]} 个, 修复 {stats["fixed"]} 个, 移除 {stats["removed"]} 个')
-        if stats['errors']:
-            get_logger().warning(f'发现 {len(stats["errors"])} 个错误，请检查日志')
-    except Exception as e:
-        get_logger().error(f'索引验证失败: {e}')
 
     # 启动监控
     observer.start()
@@ -707,8 +513,6 @@ def main():
     except KeyboardInterrupt:
         get_logger().info('')
         get_logger().info('收到停止信号，正在关闭...')
-        debounce.flush_all()
-        debounce.wait()
         observer.stop()
         observer.join()
         get_logger().info('服务已停止')
