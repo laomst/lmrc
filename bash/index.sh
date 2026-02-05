@@ -1,14 +1,6 @@
 #!/bin/bash
 # Bash 环境配置入口文件
-#
-# 在 ~/.bashrc 或 ~/.bash_profile 中添加: source ~/lmrc/bash/index.sh
-#
-# 注意：仅支持 Linux 和 macOS
-# - macOS: 在 ~/.bash_profile 中添加
-# - Linux: 在 ~/.bashrc 中添加
-# - Windows (WSL): 在 ~/.bashrc 中添加
-#
-# 不支持原生 Windows (PowerShell/CMD)，Windows 用户请使用 WSL
+# 在 ~/.bashrc 或 ~/.bash_profile 中添加: source ~/path/to/bash/index.sh
 
 # 获取脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

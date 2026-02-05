@@ -249,6 +249,47 @@ stopwatch() {
 
 # ==================== 颜色/主题 ====================
 
+# ==================== 路径查看 ====================
+
+# 显示 PATH 列表
+# 选项:
+#   -i, --info    分块显示 LMRC_PATH 和 PATH 的详细内容
+pathls() {
+  local show_info=false
+
+  # 解析参数
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -i|--info)
+        show_info=true
+        shift
+        ;;
+      *)
+        echo "Usage: pathls [-i|--info]" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ "$show_info" == true ]]; then
+    # 分块显示 LMRC_PATH 和 PATH
+    echo "\033[1;34m=== LMRC_PATH ===\033[0m"
+    if [[ -n "$LMRC_PATH" ]]; then
+      echo "${LMRC_PATH//:/$'\n'}"
+    else
+      echo "(empty)"
+    fi
+
+    echo -e "\n\033[1;34m=== PATH ===\033[0m"
+    echo "${PATH//:/$'\n'}"
+  else
+    # 默认显示完整 PATH
+    echo "${PATH//:/$'\n'}"
+  fi
+}
+
+# ==================== 颜色/主题 ====================
+
 # 显示 256 色测试
 colors256() {
   for c in {0..255}; do

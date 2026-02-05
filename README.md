@@ -80,8 +80,6 @@ source ~/lmrc/zsh/index.zsh
 ## 文档
 
 - [CLAUDE.md](CLAUDE.md) - Claude Code 工作指南
-- [bash/README.md](bash/README.md) - Bash 配置详细说明
-- [zsh/README.md](zsh/README.md) - Zsh 配置详细说明
 - [typora/README.md](typora/README.md) - Typora 扩展使用说明
 
 ## 许可

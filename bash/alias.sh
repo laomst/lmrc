@@ -7,9 +7,6 @@ alias ll="ls -alF"
 alias la="ls -A"
 alias l="ls -CF"
 
-# 路径查看
-alias pathls='echo "${PATH//:/\n}"'
-
 # Python 别名（仅当 python3 存在但 python 不存在时设置）
 if command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
   alias python='python3'

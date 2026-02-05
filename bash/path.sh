@@ -15,23 +15,27 @@ CUSTOM_PATHS=(
   "${HOMEBREW_PREFIX:-/opt/homebrew}/bin"
 )
 
-# 将自定义路径添加到 PATH 前面
-_path_add_to_front() {
-  local path_entry="$1"
-  # 跳过空路径和已存在的路径
-  [[ -z "$path_entry" ]] && return
-  [[ -d "$path_entry" ]] || return
-  [[ ":$PATH:" == *":$path_entry:"* ]] && return
-
-  PATH="$path_entry:$PATH"
-}
-
-# 反向遍历数组，先处理后面的元素，最后处理前面的元素（放到最前面）
-for ((i=${#CUSTOM_PATHS[@]}-1; i>=0; i--)); do
-  _path_add_to_front "${CUSTOM_PATHS[i]}"
+# 将自定义路径添加到 PATH 前面（数组靠前的元素优先级更高）
+# 正序遍历数组，依次拼接有效路径，然后整体添加到 PATH 前面
+# 不检查 PATH 中是否已存在，直接将声明的路径优先级提至最高
+new_paths=""
+for path_entry in "${CUSTOM_PATHS[@]}"; do
+  if [[ -d "$path_entry" ]]; then
+    if [[ -n "$new_paths" ]]; then
+      new_paths="$new_paths:$path_entry"
+    else
+      new_paths="$path_entry"
+    fi
+  fi
 done
+
+# 导出自定义路径环境变量
+if [[ -n "$new_paths" ]]; then
+  export LMRC_PATH="$new_paths"
+  PATH="$LMRC_PATH:$PATH"
+fi
 
 export PATH
 
 # 清理临时变量
-unset _path_add_to_front
+unset new_paths path_entry

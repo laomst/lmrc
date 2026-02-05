@@ -7,9 +7,6 @@ alias ll="ls -alF"
 alias la="ls -A"
 alias l="ls -CF"
 
-# 路径查看（使用 zsh 数组语法）
-alias pathls='echo ${(j:\n:)path}'
-
 # Python 别名
 alias python='python3'
 alias pip='pip3'

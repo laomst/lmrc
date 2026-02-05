@@ -18,12 +18,23 @@ CUSTOM_PATHS=(
 )
 
 # 将自定义路径添加到 PATH 前面（数组靠前的元素优先级更高）
-# 反向遍历数组，先处理后面的元素，最后处理前面的元素（放到最前面）
-for ((i=${#CUSTOM_PATHS[@]}-1; i>=0; i--)); do
-  path_entry="${CUSTOM_PATHS[i]}"
-  if [[ -d "$path_entry" ]] && [[ ":$PATH:" != *":$path_entry:"* ]]; then
-    PATH="$path_entry:$PATH"
+# 正序遍历数组，依次拼接有效路径，然后整体添加到 PATH 前面
+# 不检查 PATH 中是否已存在，直接将声明的路径优先级提至最高
+local new_paths=""
+for path_entry in "${CUSTOM_PATHS[@]}"; do
+  if [[ -d "$path_entry" ]]; then
+    if [[ -n "$new_paths" ]]; then
+      new_paths="$new_paths:$path_entry"
+    else
+      new_paths="$path_entry"
+    fi
   fi
 done
+
+# 导出自定义路径环境变量
+if [[ -n "$new_paths" ]]; then
+  export LMRC_PATH="$new_paths"
+  PATH="$LMRC_PATH:$PATH"
+fi
 
 export PATH

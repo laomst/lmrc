@@ -139,6 +139,25 @@ SDK 路径在 `zsh/path.zsh` 中配置：
 - `MAVEN_HOME` - Maven 位置
 - `PYTHON_HOME` - Python 框架路径
 
+### 自定义路径管理
+
+`path.sh/path.zsh` 会将 `CUSTOM_PATHS` 数组中定义的路径添加到 PATH 前面，并导出 `LMRC_PATH` 环境变量：
+
+- `LMRC_PATH` - 包含所有由 lmrc 添加的自定义路径
+- 数组靠前的元素优先级更高（最先被添加到 PATH）
+
+### 工具函数：pathls
+
+`pathls` 函数用于显示 PATH 列表：
+
+```bash
+# 显示完整 PATH（每行一个）
+pathls
+
+# 分块显示 LMRC_PATH 和 PATH
+pathls -i
+```
+
 ---
 
 ## 第二部分：Typora 扩展工具 (typora/)
