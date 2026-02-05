@@ -441,9 +441,11 @@ def add_front_matter_to_file(file_path: str, workspace_path: str) -> bool:
             else:
                 new_typora_copy_images_to = f'.assets/{url_prefix}/{existing_serial}'
 
-            # 检查是否需要更新
+            # 检查是否需要更新 front matter
             if existing_url == new_typora_root_url and existing_copy_url == new_typora_copy_images_to:
-                write_log(f'  跳过: serial={existing_serial}, typora-root-url 和 typora-copy-images-to 无需更新')
+                # front matter 无需更新，但要确保文件在索引中
+                write_log(f'  front matter 无需更新，检查索引...')
+                update_index(workspace_path, existing_serial, file_path)
                 return False
 
             # 更新 typora-root-url 和 typora-copy-images-to，保留所有其他字段
