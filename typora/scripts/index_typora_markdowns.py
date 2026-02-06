@@ -14,9 +14,6 @@ Typora Markdown 文件索引模块
 - remove_from_index(workspace_path: str, file_path: str) -> bool
     从索引中移除指定文件（用于文件删除事件）。
 
-- verify_and_fix_index(workspace_path: str, auto_fix: bool = True) -> dict
-    验证索引完整性并修复错误的路径。
-
 ## 使用示例
 
 ```python
@@ -46,9 +43,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import re
 import sys
-import uuid
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -72,8 +69,14 @@ def _find_files_by_extension(directory: str, extension: str) -> list[str]:
 
 
 def _generate_serial() -> str:
-    """生成8位UUID（从32位UUID截取前8位）"""
-    return uuid.uuid4().hex[:8]
+    """生成8位唯一标识符，首位字母，其余7位字母数字混合"""
+    letters = 'abcdefghijklmnopqrstuvwxyz'
+    alnum = letters + '0123456789'
+    # 第一位从 26 个小写字母中随机选择
+    first_char = random.choice(letters)
+    # 其余 7 位从 36 个字符（26字母+10数字）中随机选择
+    remaining = ''.join(random.choice(alnum) for _ in range(7))
+    return first_char + remaining
 
 
 def _generate_unique_serial(workspace_path: str) -> str:
@@ -198,8 +201,8 @@ def _create_front_matter(serial: str, relative_path: str) -> str:
     # typora-root-url 拼接规则: 相对路径
     typora_root_url = relative_path
 
-    # typora-copy-images-to 拼接规则: 相对路径 + .assets/ + uuid前2位 + / + 完整uuid
-    url_prefix = serial[:2]
+    # typora-copy-images-to 拼接规则: 相对路径 + .assets/ + uuid首位 + / + 完整uuid
+    url_prefix = serial[:1]
     if relative_path:
         typora_copy_images_to = f'{relative_path}.assets/{url_prefix}/{serial}'
     else:
@@ -209,7 +212,7 @@ def _create_front_matter(serial: str, relative_path: str) -> str:
     fields = {
         'serial': serial,
         'typora-root-url': typora_root_url,
-        'typora-copy-images-to': typora_copy_images_to
+        'typora-copy-images-to': typora_copy_images_to,
     }
     return _build_front_matter(fields)
 
@@ -234,8 +237,8 @@ def _calculate_file_relative_path(workspace_path: str, file_path: str) -> str:
 
 
 def _get_index_file_path(workspace_path: str) -> str:
-    """获取索引文件路径（工作空间根目录下的 .index.json）"""
-    return os.path.join(workspace_path, '.index.json')
+    """获取索引文件路径（工作空间根目录下的 .index/path_index.json）"""
+    return os.path.join(workspace_path, '.index', 'path_index.json')
 
 
 def _read_index_file(index_path: str) -> dict:
@@ -252,6 +255,10 @@ def _read_index_file(index_path: str) -> dict:
 
 def _write_index_file(index_path: str, index_data: dict) -> None:
     """写入索引文件"""
+    # 确保目录存在
+    index_dir = os.path.dirname(index_path)
+    if index_dir and not os.path.exists(index_dir):
+        os.makedirs(index_dir, exist_ok=True)
     with open(index_path, 'w', encoding='utf-8') as f:
         json.dump(index_data, f, ensure_ascii=False, indent=2)
 
@@ -278,141 +285,6 @@ def _update_index(workspace_path: str, serial: str, file_path: str) -> None:
 
     # 写回索引文件
     _write_index_file(index_path, index_data)
-
-
-def _verify_and_fix_index(workspace_path: str, auto_fix: bool = True) -> dict:
-    """
-    验证索引完整性并修复错误的路径
-
-    检查每个 serial 对应的文件是否存在：
-    - 如果存在：验证路径是否正确
-    - 如果不存在：在工作空间中搜索该文件（通过 serial），更新索引
-    - 如果找不到：从索引中移除
-
-    Args:
-        workspace_path: 工作空间路径
-        auto_fix: 是否自动修复错误的索引
-
-    Returns:
-        统计信息：{'verified': 数量, 'fixed': 数量, 'removed': 数量, 'errors': 列表}
-    """
-    index_path = _get_index_file_path(workspace_path)
-    index_data = _read_index_file(index_path)
-
-    stats = {
-        'verified': 0,
-        'fixed': 0,
-        'removed': 0,
-        'errors': []
-    }
-
-    if not index_data:
-        return stats
-
-    write_log('开始验证索引完整性...')
-
-    # 需要更新的索引
-    to_update = {}
-    # 需要移除的 serial
-    to_remove = []
-
-    for serial, indexed_path in index_data.items():
-        # 构建绝对路径
-        abs_indexed_path = os.path.join(workspace_path, indexed_path.lstrip('/'))
-
-        if os.path.exists(abs_indexed_path):
-            # 文件存在，验证是否是正确的文件（检查 serial）
-            try:
-                with open(abs_indexed_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    front_matter = _get_existing_front_matter(content)
-                    if front_matter:
-                        file_serial = _extract_serial_from_front_matter(front_matter[0])
-                        if file_serial == serial:
-                            stats['verified'] += 1
-                        else:
-                            # 文件存在但 serial 不匹配，记录错误
-                            stats['errors'].append(f'文件 {indexed_path} 的 serial 不匹配: 索引中为 {serial}, 文件中为 {file_serial}')
-                            # 更新为正确的 serial
-                            to_update[file_serial] = indexed_path
-                            to_remove.append(serial)
-                    else:
-                        # 文件没有 front matter，需要添加
-                        stats['errors'].append(f'文件 {indexed_path} 缺少 front matter')
-            except Exception as e:
-                stats['errors'].append(f'读取文件 {indexed_path} 失败: {e}')
-        else:
-            # 文件不存在，尝试在工作空间中搜索
-            write_log(f'文件不存在: {indexed_path}，serial: {serial}，正在搜索...')
-            found_path = _find_file_by_serial(workspace_path, serial)
-
-            if found_path:
-                # 找到文件，更新索引
-                new_relative_path = _calculate_file_relative_path(workspace_path, found_path)
-                to_update[serial] = new_relative_path
-                stats['fixed'] += 1
-                write_log(f'  找到文件，更新索引: {indexed_path} -> {new_relative_path}')
-
-                # 如果 auto_fix，同时更新文件的 typora-root-url
-                if auto_fix:
-                    try:
-                        _add_front_matter_to_file(found_path, workspace_path)
-                        write_log(f'  已更新文件 front matter')
-                    except Exception as e:
-                        stats['errors'].append(f'更新文件 front matter 失败: {e}')
-            else:
-                # 找不到文件，从索引中移除
-                to_remove.append(serial)
-                stats['removed'] += 1
-                write_log(f'  文件已删除，从索引中移除: serial={serial}')
-
-    # 应用更新
-    if to_update or to_remove:
-        for serial in to_remove:
-            if serial in index_data:
-                del index_data[serial]
-
-        for serial, new_path in to_update.items():
-            index_data[serial] = new_path
-
-        _write_index_file(index_path, index_data)
-        write_log(f'索引验证完成: 已验证 {stats["verified"]} 个, 修复 {stats["fixed"]} 个, 移除 {stats["removed"]} 个')
-
-        if stats['errors']:
-            write_log(f'发现 {len(stats["errors"])} 个错误')
-    else:
-        write_log(f'索引验证完成: 所有 {stats["verified"]} 个文件均正常')
-
-    return stats
-
-
-def _find_file_by_serial(workspace_path: str, serial: str) -> Optional[str]:
-    """
-    在工作空间中查找包含指定 serial 的 Markdown 文件
-
-    Args:
-        workspace_path: 工作空间路径
-        serial: 要查找的 serial
-
-    Returns:
-        找到的文件绝对路径，未找到返回 None
-    """
-    # 搜索所有 .md 文件
-    md_files = _find_files_by_extension(workspace_path, 'md')
-
-    for md_file in md_files:
-        try:
-            with open(md_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                front_matter = _get_existing_front_matter(content)
-                if front_matter:
-                    file_serial = _extract_serial_from_front_matter(front_matter[0])
-                    if file_serial == serial:
-                        return md_file
-        except Exception:
-            continue
-
-    return None
 
 
 def _add_front_matter_to_file(file_path: str, workspace_path: str) -> bool:
@@ -446,7 +318,7 @@ def _add_front_matter_to_file(file_path: str, workspace_path: str) -> bool:
         if existing_serial:
             # 使用现有的 serial 计算新的值
             new_typora_root_url = relative_path
-            url_prefix = existing_serial[:2]
+            url_prefix = existing_serial[:1]
             if relative_path:
                 new_typora_copy_images_to = f'{relative_path}.assets/{url_prefix}/{existing_serial}'
             else:
@@ -481,7 +353,7 @@ def _add_front_matter_to_file(file_path: str, workspace_path: str) -> bool:
 
             # 计算 typora-root-url 和 typora-copy-images-to
             typora_root_url = relative_path
-            url_prefix = serial[:2]
+            url_prefix = serial[:1]
             if relative_path:
                 typora_copy_images_to = f'{relative_path}.assets/{url_prefix}/{serial}'
             else:
@@ -575,7 +447,6 @@ def main():
   %(prog)s directory/                        # 处理目录
   %(prog)s file1.md file2.md dir/            # 处理多个路径
   %(prog)s -w /workspace file.md             # 指定工作空间路径
-  %(prog)s --verify-index                    # 验证并修复索引
         '''
     )
 
@@ -589,12 +460,6 @@ def main():
         '-w', '--workspace',
         default=None,
         help='工作空间路径（也可通过环境变量 TYPORA_WORKSPACE 设置）'
-    )
-
-    parser.add_argument(
-        '--verify-index',
-        action='store_true',
-        help='验证并修复索引文件（不处理文件）'
     )
 
     args = parser.parse_args()
@@ -614,21 +479,6 @@ def main():
     if not os.path.isdir(workspace):
         write_log(f'错误: 工作空间路径不存在: {workspace}')
         sys.exit(1)
-
-    # 处理 --verify-index 选项
-    if args.verify_index:
-        write_log(f'工作空间: {workspace}')
-        write_log('开始验证并修复索引...\n')
-        stats = _verify_and_fix_index(workspace, auto_fix=True)
-        write_log('\n验证完成:')
-        write_log(f'  已验证: {stats["verified"]} 个文件')
-        write_log(f'  已修复: {stats["fixed"]} 个路径')
-        write_log(f'  已移除: {stats["removed"]} 个无效索引')
-        if stats['errors']:
-            write_log(f'  发现 {len(stats["errors"])} 个错误:')
-            for error in stats['errors']:
-                write_log(f'    - {error}')
-        sys.exit(0)
 
     # 检查是否指定了要处理的路径
     if not args.paths:
@@ -690,7 +540,7 @@ def index_or_update_file(workspace_path: str, file_path: str) -> bool:
     这是模块的主要公共 API 函数，供外部调用以：
     1. 验证文件是否在工作空间内
     2. 为文件添加或更新 YAML front matter
-    3. 更新工作空间根目录下的 .index.json 索引
+    3. 更新工作空间根目录下的 .index/path_index.json 索引
 
     Args:
         workspace_path: 工作空间目录的绝对路径
@@ -739,7 +589,7 @@ def remove_from_index(workspace_path: str, file_path: str) -> bool:
     """
     从索引中移除指定的 Markdown 文件
 
-    当文件被删除或移动时，从工作空间根目录的 .index.json 中移除其索引。
+    当文件被删除或移动时，从工作空间根目录的 .index/path_index.json 中移除其索引。
 
     Args:
         workspace_path: 工作空间目录的绝对路径
@@ -788,29 +638,6 @@ def remove_from_index(workspace_path: str, file_path: str) -> bool:
         _write_index_file(index_path, index_data)
 
     return removed
-
-
-def verify_and_fix_index(workspace_path: str, auto_fix: bool = True) -> dict:
-    """
-    验证索引完整性并修复错误的路径
-
-    检查每个 serial 对应的文件是否存在：
-    - 如果存在：验证路径是否正确
-    - 如果不存在：在工作空间中搜索该文件（通过 serial），更新索引
-    - 如果找不到：从索引中移除
-
-    Args:
-        workspace_path: 工作空间路径
-        auto_fix: 是否自动修复错误的索引
-
-    Returns:
-        统计信息：{'verified': 数量, 'fixed': 数量, 'removed': 数量, 'errors': 列表}
-
-    示例:
-        >>> stats = verify_and_fix_index('/workspace')
-        >>> print(f'已验证: {stats["verified"]}, 已修复: {stats["fixed"]}')
-    """
-    return _verify_and_fix_index(workspace_path, auto_fix)
 
 
 # 定义公共 API（__all__ 用于控制 from module import * 的行为）

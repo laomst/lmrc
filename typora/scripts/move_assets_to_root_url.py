@@ -87,7 +87,7 @@ def get_asset_images(asset_dir: Path) -> list[Path]:
 
 def update_markdown_image_links(markdown_file: Path, file_stem: str, serial: str, dry_run: bool = False) -> int:
     """
-    更新markdown文件中的图片链接，将.assets/文件名/替换为/.assets/{serial前两位}/{serial}/
+    更新markdown文件中的图片链接，将.assets/文件名/替换为/.assets/{serial首位}/{serial}/
 
     使用简单的字符串替换，避免正则表达式的转义问题
 
@@ -107,8 +107,8 @@ def update_markdown_image_links(markdown_file: Path, file_stem: str, serial: str
         write_log(f"  读取文件失败: {e}")
         return 0
 
-    # 构建新的图片路径: /.assets/{serial前两位}/{serial}/
-    new_path = f'/.assets/{serial[:2]}/{serial}/'
+    # 构建新的图片路径: /.assets/{serial首位}/{serial}/
+    new_path = f'/.assets/{serial[:1]}/{serial}/'
 
     # 需要替换的旧路径
     old_path_1 = f'.assets/{file_stem}/'
