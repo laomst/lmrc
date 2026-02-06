@@ -195,16 +195,16 @@ typora/
 **生成的 front matter：**
 ```yaml
 ---
-article-id: a1b2c3d4
+serial: a1b2c3d4
 typora-root-url: ../
 typora-copy-images-to: ../assets
 ---
 ```
 
-**索引文件结构** (`.index.json`)：
+**索引文件结构** (`.index/path_index.json`)：
 ```json
 {
-  "article-id": "/相对路径/文件.md"
+  "serial": "/相对路径/文件.md"
 }
 ```
 

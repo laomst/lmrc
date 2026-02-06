@@ -26,8 +26,8 @@ pip install -r scripts/requirements.txt
 为 Typora 工作空间中的 Markdown 文件建立索引系统。
 
 **功能：**
-- 自动添加 YAML front matter（`article-id`、`typora-root-url`、`typora-copy-images-to`）
-- 维护工作空间根目录的 `.index.json` 索引文件
+- 自动添加 YAML front matter（`serial`、`typora-root-url`、`typora-copy-images-to`）
+- 维护工作空间根目录的 `.index/path_index.json` 索引文件
 
 **使用方式：**
 ```bash

@@ -33,12 +33,12 @@ for config_file in "${CONFIG_FILES[@]}"; do
   fi
 done
 
-# 加载目录下其他配置文件（排除已加载的和 index.sh 自己）
+# 加载目录下其他配置文件（排除已加载的、exports.sh 和 index.sh 自己）
 for config_file in "$SCRIPT_DIR"/*.sh; do
   [[ -e "$config_file" ]] || continue  # 处理无匹配文件的情况
   filename=$(basename "$config_file")
-  # 跳过 index.sh 和已加载的文件
-  if [[ "$filename" != "index.sh" ]] && [[ ! " ${loaded_files[@]} " =~ " ${filename} " ]]; then
+  # 跳过 exports.sh、index.sh 和已加载的文件
+  if [[ "$filename" != "index.sh" ]] && [[ "$filename" != "exports.sh" ]] && [[ ! " ${loaded_files[@]} " =~ " ${filename} " ]]; then
     source "$config_file" && ((_loaded_count++)) || ((_failed_count++))
   fi
 done
@@ -49,4 +49,4 @@ if [[ $- == *i* ]]; then
   [[ $_failed_count -gt 0 ]] && echo "Warning: $_failed_count file(s) failed to load" >&2
 fi
 
-unset SCRIPT_DIR CONFIG_FILES config_file file_path _loaded_count _failed_count
+unset SCRIPT_DIR CONFIG_FILES loaded_files config_file file_path filename _loaded_count _failed_count

@@ -10,7 +10,7 @@
 
 | 事件类型 | 处理方式 |
 |---------|---------|
-| 新建 .md 文件 | 自动添加 front matter（article-id、typora-root-url、typora-copy-images-to）并更新索引 |
+| 新建 .md 文件 | 自动添加 front matter（serial、typora-root-url、typora-copy-images-to）并更新索引 |
 | 移动 .md 文件 | 自动更新 typora-root-url 和索引中的路径 |
 | 删除 .md 文件 | 自动从索引中移除 |
 | 修改 .md 文件 | 检查并更新 front matter（带防抖，避免频繁触发） |
@@ -150,7 +150,7 @@ TYPORA_WORKSPACE=/path/to/workspace ./install-service.sh install
 │  ┌─────────────────────────────────────────────┐   │
 │  │    index_typora_markdowns.py (调用)          │   │
 │  │  • 添加/更新 front matter                    │   │
-│  │  • 更新 .index.json 索引文件                 │   │
+│  │  • 更新 .index/path_index.json 索引文件      │   │
 │  └─────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────┘
 ```
@@ -159,8 +159,8 @@ TYPORA_WORKSPACE=/path/to/workspace ./install-service.sh install
 
 服务启动时会自动验证索引完整性，并修复错误的路径：
 
-1. **检查文件是否存在** - 遍历索引中的每个 article-id
-2. **搜索移动的文件** - 如果文件不存在，在工作空间中搜索（通过 article-id）
+1. **检查文件是否存在** - 遍历索引中的每个 serial
+2. **搜索移动的文件** - 如果文件不存在，在工作空间中搜索（通过 serial）
 3. **更新索引** - 修复找到的文件路径，移除不存在的索引
 4. **显示结果** - 输出验证、修复、移除的文件数量
 
