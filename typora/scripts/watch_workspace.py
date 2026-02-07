@@ -286,6 +286,9 @@ class MarkdownEventHandler:
         """
         self.workspace_path = os.path.abspath(workspace_path)
         self.debounce = debounce_manager or DebounceManager()
+        # 记录最近移动的文件 {dest_path: timestamp}
+        # 用于防止移动后立即触发的 created 事件
+        self._recently_moved: Dict[str, float] = {}
 
     def is_markdown_file(self, path: str) -> bool:
         """检查是否为 Markdown 文件"""
@@ -310,6 +313,23 @@ class MarkdownEventHandler:
             return True
         return False
 
+    def _cleanup_moved_records(self, current_time: float = None):
+        """
+        清理过期的移动记录
+
+        Args:
+            current_time: 当前时间戳（如果为 None 则使用当前时间）
+        """
+        if current_time is None:
+            current_time = time.time()
+
+        expired_keys = [
+            path for path, timestamp in self._recently_moved.items()
+            if current_time - timestamp >= DEBOUNCE_SECONDS
+        ]
+        for key in expired_keys:
+            del self._recently_moved[key]
+
     def handle_created(self, file_path: str):
         """处理新建文件"""
         if not self.is_markdown_file(file_path):
@@ -318,6 +338,18 @@ class MarkdownEventHandler:
         # 跳过 Untitled 开头的文件
         if self.should_skip_file(file_path):
             return
+
+        # 检查是否为最近移动的文件（防止移动后触发 created 事件）
+        current_time = time.time()
+        moved_time = self._recently_moved.get(file_path, 0)
+        if current_time - moved_time < DEBOUNCE_SECONDS:
+            get_logger().debug(f'[移动-创建] 跳过移动后触发的 created 事件: {file_path}')
+            # 清除移动记录（已处理，无需保留）
+            self._recently_moved.pop(file_path, None)
+            return
+
+        # 清理过期的移动记录
+        self._cleanup_moved_records(current_time)
 
         # 防抖检查
         if not self.debounce.should_process('created', file_path):
@@ -357,6 +389,9 @@ class MarkdownEventHandler:
 
             # 清除源路径的防抖记录（文件已不存在）
             self.debounce.clear(src_path)
+
+            # 记录目标路径，防止后续触发 created 事件
+            self._recently_moved[dest_path] = time.time()
 
             # 为新路径添加 front matter（会更新 serial 的路径）
             modified = index_or_update_file(self.workspace_path, dest_path)
