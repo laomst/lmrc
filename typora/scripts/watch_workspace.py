@@ -15,6 +15,10 @@ Typora 工作空间文件监控服务
 - 防止短时间内重复处理（如编辑器保存时的多次事件）
 - 支持的事件类型：created、moved、deleted、modified
 
+依赖管理：
+- 启动时自动检查并安装必要的依赖（send2trash、watchdog）
+- 如果自动安装失败，会提示手动安装命令
+
 使用方式：
     # 手动运行（前台）
     python watch_workspace.py
@@ -102,6 +106,42 @@ try:
 except ImportError:
     Observer = None
     FileSystemEventHandler = None
+
+
+def check_and_install_dependencies() -> None:
+    """
+    检查并安装必要的依赖
+
+    检查 send2trash 和 watchdog 是否安装，如果没有则自动安装
+    """
+    import subprocess
+
+    dependencies = {
+        'send2trash': 'send2trash',
+        'watchdog': 'watchdog',
+    }
+
+    for module_name, package_name in dependencies.items():
+        try:
+            __import__(module_name)
+        except ImportError:
+            get_logger().warning(f'未安装 {module_name} 模块，正在自动安装...')
+            try:
+                subprocess.check_call(
+                    [sys.executable, '-m', 'pip', 'install', '--break-system-packages', package_name],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                get_logger().info(f'✓ {module_name} 安装成功')
+                # 重新导入验证
+                __import__(module_name)
+            except subprocess.CalledProcessError:
+                get_logger().error(f'✗ {module_name} 安装失败')
+                get_logger().error(f'请手动运行: pip install {package_name}')
+                sys.exit(1)
+            except Exception as e:
+                get_logger().error(f'✗ {module_name} 安装失败: {e}')
+                sys.exit(1)
 
 
 def setup_logger(log_to_file: bool = True) -> logging.Logger:
@@ -415,21 +455,6 @@ class MarkdownEventHandler:
 
         get_logger().info(f'检测到新建文件: {file_path}')
 
-        # 打印文件前10行内容（用于监控）
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                preview_lines = []
-                for i, line in enumerate(f):
-                    if i >= 10:
-                        break
-                    preview_lines.append(line.rstrip('\n'))
-                if preview_lines:
-                    get_logger().info(f'  文件内容预览:')
-                    for line in preview_lines:
-                        get_logger().info(f'    {line}')
-        except Exception as e:
-            get_logger().debug(f'  读取文件内容失败: {e}')
-
         try:
             modified = index_or_update_file(self.workspace_path, file_path)
             if modified:
@@ -691,6 +716,9 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # 检查并安装依赖（在任何操作之前）
+    check_and_install_dependencies()
 
     # 处理 --stop
     if args.stop:
