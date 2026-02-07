@@ -7,12 +7,13 @@ Typora 工作空间文件监控服务
 监控事件：
 - 新建 .md 文件 → 自动添加 front matter 和索引
 - 移动 .md 文件 → 自动更新 typora-root-url 和索引
+- 修改 .md 文件 → 自动检查并更新 front matter（如果路径变化）
 - 删除 .md 文件 → 从索引中移除并删除对应的 assets 目录
 
 防抖机制：
 - 同一文件的同一事件在 10 秒内仅触发一次
 - 防止短时间内重复处理（如编辑器保存时的多次事件）
-- 支持的事件类型：created、moved、deleted
+- 支持的事件类型：created、moved、deleted、modified
 
 使用方式：
     # 手动运行（前台）
@@ -210,6 +211,7 @@ class DebounceManager:
     - 同一文件的 created 事件 10 秒内只触发一次
     - 同一文件的 moved 事件 10 秒内只触发一次
     - 同一文件的 deleted 事件 10 秒内只触发一次
+    - 同一文件的 modified 事件 10 秒内只触发一次
     """
 
     def __init__(self, debounce_seconds: float = DEBOUNCE_SECONDS):
@@ -226,7 +228,7 @@ class DebounceManager:
         检查是否应该处理该事件
 
         Args:
-            event_type: 事件类型 ('created', 'moved', 'deleted')
+            event_type: 事件类型 ('created', 'moved', 'deleted', 'modified')
             file_path: 文件路径
 
         Returns:
@@ -300,6 +302,7 @@ class MarkdownEventHandler:
 
         跳过条件：
         - 文件名以 "Untitled" 开头（Typora 未命名的新建文件）
+        - 文件名以 "~" 结尾（编辑器临时/备份文件）
 
         Args:
             path: 文件路径
@@ -310,6 +313,9 @@ class MarkdownEventHandler:
         filename = os.path.basename(path)
         if filename.startswith('Untitled'):
             get_logger().debug(f'[跳过] Untitled 文件: {path}')
+            return True
+        if filename.endswith('~'):
+            get_logger().debug(f'[跳过] 临时/备份文件: {path}')
             return True
         return False
 
@@ -460,6 +466,23 @@ class MarkdownEventHandler:
         except Exception as e:
             get_logger().error(f'  ✗ 处理失败: {e}')
 
+    def handle_modified(self, file_path: str):
+        """处理文件修改（仅记录日志，不做操作）"""
+        if not self.is_markdown_file(file_path):
+            return
+
+        # 跳过 Untitled 开头的文件
+        if self.should_skip_file(file_path):
+            return
+
+        # 防抖检查
+        if not self.debounce.should_process('modified', file_path):
+            get_logger().debug(f'[防抖] 跳过重复的 modified 事件: {file_path}')
+            return
+
+        get_logger().info(f'检测到文件修改: {file_path}')
+        get_logger().debug(f'  仅记录日志，不做处理')
+
 
 def write_pid_file(pid: int):
     """写入 PID 文件"""
@@ -533,7 +556,7 @@ def create_observer():
 
 
 class WatchdogEventHandler(FileSystemEventHandler):
-    """watchdog 事件处理器适配器（仅处理文件路径变化）"""
+    """watchdog 事件处理器适配器"""
 
     def __init__(self, handler: MarkdownEventHandler):
         self.handler = handler
@@ -549,6 +572,10 @@ class WatchdogEventHandler(FileSystemEventHandler):
     def on_deleted(self, event):
         if not event.is_directory:
             self.handler.handle_deleted(event.src_path)
+
+    def on_modified(self, event):
+        if not event.is_directory:
+            self.handler.handle_modified(event.src_path)
 
 
 def main():
