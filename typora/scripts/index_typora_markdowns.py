@@ -184,8 +184,8 @@ def _extract_serial_from_front_matter(front_matter: str) -> Optional[str]:
     """从现有的 front matter 中提取 serial"""
     fields = _parse_front_matter(front_matter)
     serial = fields.get('serial', '')
-    # 验证是否为8位16进制字符串
-    if re.match(r'^[a-f0-9]{8}$', serial, re.IGNORECASE):
+    # 只需判断 serial 非空
+    if serial and serial.strip():
         return serial
     return None
 
@@ -585,11 +585,41 @@ def index_or_update_file(workspace_path: str, file_path: str) -> bool:
     return _add_front_matter_to_file(abs_file, abs_workspace)
 
 
+def _remove_assets_dir(workspace_path: str, serial: str) -> bool:
+    """
+    删除指定 serial 对应的 assets 目录
+
+    assets 目录路径规则: {工作空间目录}/.assets/{serial首位}/{serial}
+
+    Args:
+        workspace_path: 工作空间目录的绝对路径
+        serial: 文章的 serial（8位标识符）
+
+    Returns:
+        bool: 是否成功删除（True=已删除，False=目录不存在）
+    """
+    url_prefix = serial[:1]
+    assets_dir = os.path.join(workspace_path, '.assets', url_prefix, serial)
+
+    if os.path.isdir(assets_dir):
+        try:
+            import shutil
+            shutil.rmtree(assets_dir)
+            write_log(f'  已删除 assets 目录: {assets_dir}')
+            return True
+        except Exception as e:
+            write_log(f'  删除 assets 目录失败: {e}')
+            return False
+
+    return False
+
+
 def remove_from_index(workspace_path: str, file_path: str) -> bool:
     """
     从索引中移除指定的 Markdown 文件
 
-    当文件被删除或移动时，从工作空间根目录的 .index/path_index.json 中移除其索引。
+    当文件被删除或移动时，从工作空间根目录的 .index/path_index.json 中移除其索引，
+    并删除对应的 assets 目录。
 
     Args:
         workspace_path: 工作空间目录的绝对路径
@@ -631,7 +661,9 @@ def remove_from_index(workspace_path: str, file_path: str) -> bool:
             to_delete.append(serial)
             removed = True
 
+    # 先删除 assets 目录，再从索引中移除
     for serial in to_delete:
+        _remove_assets_dir(abs_workspace, serial)
         del index_data[serial]
 
     if removed:

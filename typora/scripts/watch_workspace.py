@@ -7,7 +7,7 @@ Typora 工作空间文件监控服务
 监控事件：
 - 新建 .md 文件 → 自动添加 front matter 和索引
 - 移动 .md 文件 → 自动更新 typora-root-url 和索引
-- 删除 .md 文件 → 从索引中移除
+- 删除 .md 文件 → 从索引中移除并删除对应的 assets 目录
 
 防抖机制：
 - 同一文件的同一事件在 10 秒内仅触发一次
@@ -358,10 +358,40 @@ class MarkdownEventHandler:
 
         get_logger().info(f'检测到新建文件: {file_path}')
 
+        # 打印文件前10行内容（用于监控）
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                preview_lines = []
+                for i, line in enumerate(f):
+                    if i >= 10:
+                        break
+                    preview_lines.append(line.rstrip('\n'))
+                if preview_lines:
+                    get_logger().info(f'  文件内容预览:')
+                    for line in preview_lines:
+                        get_logger().info(f'    {line}')
+        except Exception as e:
+            get_logger().debug(f'  读取文件内容失败: {e}')
+
         try:
             modified = index_or_update_file(self.workspace_path, file_path)
             if modified:
                 get_logger().info(f'  ✓ 已添加 front matter 和索引')
+                # 打印更新后的 front matter 内容
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        if content.startswith('---'):
+                            rest = content[4:]
+                            second_dash_start = rest.find('\n---')
+                            if second_dash_start != -1:
+                                front_matter_end = 4 + second_dash_start + 4
+                                front_matter = content[:front_matter_end]
+                                get_logger().info(f'  Front matter 内容:')
+                                for line in front_matter.split('\n'):
+                                    get_logger().info(f'    {line}')
+                except Exception as e:
+                    get_logger().debug(f'  读取 front matter 失败: {e}')
             else:
                 get_logger().info(f'  - 跳过（已有正确的 front matter）')
         except Exception as e:
