@@ -9,6 +9,11 @@ Typora 工作空间文件监控服务
 - 移动 .md 文件 → 自动更新 typora-root-url 和索引
 - 删除 .md 文件 → 从索引中移除
 
+防抖机制：
+- 同一文件的同一事件在 10 秒内仅触发一次
+- 防止短时间内重复处理（如编辑器保存时的多次事件）
+- 支持的事件类型：created、moved、deleted
+
 使用方式：
     # 手动运行（前台）
     python watch_workspace.py
@@ -39,8 +44,9 @@ import logging
 import os
 import sys
 import time
+from collections import defaultdict
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 # 环境变量名称
 TYPORA_WORKSPACE_ENV = 'TYPORA_WORKSPACE'
@@ -192,23 +198,130 @@ def get_logger() -> logging.Logger:
 setup_logger()
 
 
+# 防抖时间窗口（秒）
+DEBOUNCE_SECONDS = 10
+
+
+class DebounceManager:
+    """
+    防抖管理器，确保同一文件的同一事件在指定时间内仅触发一次
+
+    防抖键由 (event_type, file_path) 组成，确保：
+    - 同一文件的 created 事件 10 秒内只触发一次
+    - 同一文件的 moved 事件 10 秒内只触发一次
+    - 同一文件的 deleted 事件 10 秒内只触发一次
+    """
+
+    def __init__(self, debounce_seconds: float = DEBOUNCE_SECONDS):
+        """
+        Args:
+            debounce_seconds: 防抖时间窗口（秒）
+        """
+        self.debounce_seconds = debounce_seconds
+        # {(event_type, file_path): last_timestamp}
+        self._last_processed: Dict[Tuple[str, str], float] = {}
+
+    def should_process(self, event_type: str, file_path: str) -> bool:
+        """
+        检查是否应该处理该事件
+
+        Args:
+            event_type: 事件类型 ('created', 'moved', 'deleted')
+            file_path: 文件路径
+
+        Returns:
+            True 表示应该处理，False 表示在防抖期内应跳过
+        """
+        key = (event_type, file_path)
+        current_time = time.time()
+
+        last_time = self._last_processed.get(key, 0)
+        if current_time - last_time < self.debounce_seconds:
+            # 在防抖期内，跳过处理
+            return False
+
+        # 更新最后处理时间
+        self._last_processed[key] = current_time
+        return True
+
+    def clear(self, file_path: str = None):
+        """
+        清除防抖记录
+
+        Args:
+            file_path: 如果指定，仅清除该文件的记录；否则清除所有记录
+        """
+        if file_path is None:
+            self._last_processed.clear()
+        else:
+            # 清除指定文件的所有事件类型记录
+            keys_to_remove = [k for k in self._last_processed if k[1] == file_path]
+            for key in keys_to_remove:
+                del self._last_processed[key]
+
+    def get_info(self) -> dict:
+        """获取防抖管理器状态信息"""
+        return {
+            'debounce_seconds': self.debounce_seconds,
+            'tracked_events': len(self._last_processed),
+            'events_by_type': self._count_by_type()
+        }
+
+    def _count_by_type(self) -> Dict[str, int]:
+        """统计各事件类型的追踪数量"""
+        counts = defaultdict(int)
+        for event_type, _ in self._last_processed.keys():
+            counts[event_type] += 1
+        return dict(counts)
+
+
 class MarkdownEventHandler:
     """Markdown 文件事件处理器（仅处理文件路径变化）"""
 
-    def __init__(self, workspace_path: str):
+    def __init__(self, workspace_path: str, debounce_manager: DebounceManager = None):
         """
         Args:
             workspace_path: 工作空间路径
+            debounce_manager: 防抖管理器实例
         """
         self.workspace_path = os.path.abspath(workspace_path)
+        self.debounce = debounce_manager or DebounceManager()
 
     def is_markdown_file(self, path: str) -> bool:
         """检查是否为 Markdown 文件"""
         return path.endswith('.md')
 
+    def should_skip_file(self, path: str) -> bool:
+        """
+        检查文件是否应该跳过处理
+
+        跳过条件：
+        - 文件名以 "Untitled" 开头（Typora 未命名的新建文件）
+
+        Args:
+            path: 文件路径
+
+        Returns:
+            True 表示应该跳过，False 表示可以处理
+        """
+        filename = os.path.basename(path)
+        if filename.startswith('Untitled'):
+            get_logger().debug(f'[跳过] Untitled 文件: {path}')
+            return True
+        return False
+
     def handle_created(self, file_path: str):
         """处理新建文件"""
         if not self.is_markdown_file(file_path):
+            return
+
+        # 跳过 Untitled 开头的文件
+        if self.should_skip_file(file_path):
+            return
+
+        # 防抖检查
+        if not self.debounce.should_process('created', file_path):
+            get_logger().debug(f'[防抖] 跳过重复的 created 事件: {file_path}')
             return
 
         get_logger().info(f'检测到新建文件: {file_path}')
@@ -227,11 +340,23 @@ class MarkdownEventHandler:
         if not self.is_markdown_file(dest_path):
             return
 
+        # 跳过 Untitled 开头的文件
+        if self.should_skip_file(dest_path):
+            return
+
+        # 防抖检查（使用目标路径）
+        if not self.debounce.should_process('moved', dest_path):
+            get_logger().debug(f'[防抖] 跳过重复的 moved 事件: {src_path} → {dest_path}')
+            return
+
         get_logger().info(f'检测到文件移动: {src_path} → {dest_path}')
 
         try:
             # 先从索引中移除旧路径
             remove_from_index(self.workspace_path, src_path)
+
+            # 清除源路径的防抖记录（文件已不存在）
+            self.debounce.clear(src_path)
 
             # 为新路径添加 front matter（会更新 serial 的路径）
             modified = index_or_update_file(self.workspace_path, dest_path)
@@ -247,6 +372,15 @@ class MarkdownEventHandler:
         if not self.is_markdown_file(file_path):
             return
 
+        # 跳过 Untitled 开头的文件
+        if self.should_skip_file(file_path):
+            return
+
+        # 防抖检查
+        if not self.debounce.should_process('deleted', file_path):
+            get_logger().debug(f'[防抖] 跳过重复的 deleted 事件: {file_path}')
+            return
+
         get_logger().info(f'检测到删除文件: {file_path}')
 
         try:
@@ -255,6 +389,9 @@ class MarkdownEventHandler:
                 get_logger().info(f'  ✓ 已从索引中移除')
             else:
                 get_logger().info(f'  - 文件不在索引中')
+
+            # 清除该文件的防抖记录（文件已不存在）
+            self.debounce.clear(file_path)
         except Exception as e:
             get_logger().error(f'  ✗ 处理失败: {e}')
 
@@ -481,10 +618,12 @@ def main():
     get_logger().info(f'PID: {os.getpid()}')
     get_logger().info(f'日志目录: {LOG_DIR}')
     get_logger().info(f'当前日志: {os.path.basename(get_log_file_path())}')
+    get_logger().info(f'防抖窗口: {DEBOUNCE_SECONDS} 秒')
     get_logger().info('')
 
-    # 创建事件处理器
-    md_handler = MarkdownEventHandler(workspace)
+    # 创建防抖管理器和事件处理器
+    debounce_manager = DebounceManager(debounce_seconds=DEBOUNCE_SECONDS)
+    md_handler = MarkdownEventHandler(workspace, debounce_manager=debounce_manager)
 
     # 创建 watchdog 事件处理器和观察者
     ObserverClass = create_observer()
