@@ -587,7 +587,7 @@ def index_or_update_file(workspace_path: str, file_path: str) -> bool:
 
 def _remove_assets_dir(workspace_path: str, serial: str) -> bool:
     """
-    删除指定 serial 对应的 assets 目录
+    删除指定 serial 对应的 assets 目录（移动到废纸篓）
 
     assets 目录路径规则: {工作空间目录}/.assets/{serial首位}/{serial}
 
@@ -603,10 +603,36 @@ def _remove_assets_dir(workspace_path: str, serial: str) -> bool:
 
     if os.path.isdir(assets_dir):
         try:
-            import shutil
-            shutil.rmtree(assets_dir)
-            write_log(f'  已删除 assets 目录: {assets_dir}')
-            return True
+            # 优先使用 send2trash 模块
+            try:
+                from send2trash import send2trash
+                send2trash(assets_dir)
+                write_log(f'  已将 assets 目录移动到废纸篓: {assets_dir}')
+                return True
+            except ImportError:
+                # send2trash 不可用，使用系统命令
+                if sys.platform == 'darwin':
+                    # macOS: 使用 AppleScript
+                    import subprocess
+                    escaped_path = assets_dir.replace('\\', '\\\\').replace('"', '\\"')
+                    subprocess.run([
+                        'osascript', '-e',
+                        f'tell application "Finder" to move POSIX file "{escaped_path}" to trash'
+                    ], check=True, capture_output=True)
+                    write_log(f'  已将 assets 目录移动到废纸篓: {assets_dir}')
+                    return True
+                elif sys.platform.startswith('linux'):
+                    # Linux: 使用 gio trash
+                    import subprocess
+                    subprocess.run(['gio', 'trash', assets_dir], check=True, capture_output=True)
+                    write_log(f'  已将 assets 目录移动到废纸篓: {assets_dir}')
+                    return True
+                else:
+                    # 其他平台：直接删除
+                    import shutil
+                    shutil.rmtree(assets_dir)
+                    write_log(f'  已删除 assets 目录: {assets_dir}')
+                    return True
         except Exception as e:
             write_log(f'  删除 assets 目录失败: {e}')
             return False
