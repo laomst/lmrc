@@ -19,6 +19,12 @@ Typora 工作空间文件监控服务
 - 启动时自动检查并安装必要的依赖（watchdog）
 - 如果自动安装失败，会提示手动安装命令
 
+日志管理：
+- 使用 TimedRotatingFileHandler 实现每天午夜自动轮转日志文件
+- 日志文件格式：typora-watch.log（当前）、typora-watch.YYYY-MM-DD.log（历史）
+- 自动清理超过保留天数的旧日志文件
+- 默认保留 30 天的日志（可通过 --log-retention 参数调整）
+
 使用方式：
     # 手动运行（前台）
     python watch_workspace.py
@@ -31,6 +37,9 @@ Typora 工作空间文件监控服务
 
     # 停止后台运行
     python watch_workspace.py --stop
+
+    # 清理旧日志
+    python watch_workspace.py --clean-logs
 
 系统服务安装：
     # Linux (systemd)
@@ -50,6 +59,7 @@ import os
 import sys
 import time
 from collections import defaultdict
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -63,25 +73,6 @@ PID_FILE = os.path.expanduser('~/.typora-ext-watch.pid')
 LOG_DIR = os.path.expanduser('~/.typora-ext-logs')
 # 日志文件保留天数（默认 30 天）
 DEFAULT_LOG_RETENTION_DAYS = 30
-
-
-def get_log_file_path(log_type: str = 'log') -> str:
-    """
-    获取按日期命名的日志文件路径
-
-    Args:
-        log_type: 日志类型 ('log' 或 'error')
-
-    Returns:
-        日志文件的完整路径
-    """
-    from datetime import datetime
-    date_str = datetime.now().strftime('%Y-%m-%d')
-    if log_type == 'error':
-        filename = f'typora-watch-error-{date_str}.log'
-    else:
-        filename = f'typora-watch-{date_str}.log'
-    return os.path.join(LOG_DIR, filename)
 
 # 导入索引模块
 try:
@@ -143,8 +134,20 @@ def check_and_install_dependencies() -> None:
                 sys.exit(1)
 
 
-def setup_logger(log_to_file: bool = True) -> logging.Logger:
-    """设置日志系统（幂等性：多次调用不会重复添加 handler）"""
+def setup_logger(log_to_file: bool = True, log_retention_days: int = DEFAULT_LOG_RETENTION_DAYS) -> logging.Logger:
+    """
+    设置日志系统（幂等性：多次调用不会重复添加 handler）
+
+    使用 TimedRotatingFileHandler 实现每天午夜自动轮转日志文件，
+    保留指定天数的日志文件。
+
+    Args:
+        log_to_file: 是否写入日志文件
+        log_retention_days: 日志保留天数
+
+    Returns:
+        logger 实例
+    """
     logger = logging.getLogger('typora-watch')
 
     # 如果已经有 handler，说明已经初始化过了，直接返回
@@ -164,16 +167,35 @@ def setup_logger(log_to_file: bool = True) -> logging.Logger:
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # 文件输出（按日期命名）
+    # 文件输出（使用 TimedRotatingFileHandler 实现每日轮转）
     if log_to_file:
         # 确保日志目录存在
         os.makedirs(LOG_DIR, exist_ok=True)
 
-        # 普通日志
-        log_file = get_log_file_path('log')
-        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        # 使用固定基础文件名，TimedRotatingFileHandler 会自动添加日期后缀
+        # 例如：typora-watch.log、typora-watch.log.2024-01-01、typora-watch.log.2024-01-02
+        base_log_file = os.path.join(LOG_DIR, 'typora-watch.log')
+
+        # 创建 TimedRotatingFileHandler
+        # - when='midnight': 每天午夜轮转
+        # - interval=1: 每 1 天轮转一次
+        # - backupCount: 保留的日志文件数量（设置为保留天数 + 1，因为包括当前文件）
+        file_handler = TimedRotatingFileHandler(
+            filename=base_log_file,
+            when='midnight',
+            interval=1,
+            backupCount=log_retention_days + 1,
+            encoding='utf-8'
+        )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
+
+        # 设置轮转文件的命名格式（使用 .YYYY-MM-DD 而不是默认的 .YYYY-MM-DD）
+        file_handler.namer = lambda name: name.replace('.log.', '.') + '.log'
+
+        # 设置轮转时的回调函数，用于清理旧日志
+        # 注意：TimedRotatingFileHandler 会自动删除超过 backupCount 的文件
+
         logger.addHandler(file_handler)
 
     return logger
@@ -183,6 +205,10 @@ def clean_old_logs(retention_days: int = DEFAULT_LOG_RETENTION_DAYS) -> dict:
     """
     清理超过保留天数的旧日志文件
 
+    支持两种日志文件名格式：
+    - 旧格式：typora-watch-YYYY-MM-DD.log、typora-watch-error-YYYY-MM-DD.log
+    - 新格式：typora-watch.log.YYYY-MM-DD（TimedRotatingFileHandler 生成）
+
     Args:
         retention_days: 日志保留天数
 
@@ -190,6 +216,7 @@ def clean_old_logs(retention_days: int = DEFAULT_LOG_RETENTION_DAYS) -> dict:
         清理统计：{'deleted': 数量, 'freed_bytes': 字节数}
     """
     from datetime import datetime, timedelta
+    import re
 
     stats = {'deleted': 0, 'freed_bytes': 0}
 
@@ -200,28 +227,36 @@ def clean_old_logs(retention_days: int = DEFAULT_LOG_RETENTION_DAYS) -> dict:
     cutoff_date = datetime.now() - timedelta(days=retention_days)
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
 
+    # 匹配日期的正则表达式（YYYY-MM-DD 格式）
+    date_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})')
+
     for filename in os.listdir(LOG_DIR):
-        # 只处理日志文件
-        if not (filename.startswith('typora-watch-') and filename.endswith('.log')):
+        # 只处理 typora-watch 相关的日志文件
+        if not filename.startswith('typora-watch') or not filename.endswith('.log'):
             continue
 
-        # 从文件名提取日期
-        # 格式: typora-watch-YYYY-MM-DD.log 或 typora-watch-error-YYYY-MM-DD.log
-        parts = filename.replace('typora-watch-', '').replace('.log', '').split('-')
-        if len(parts) >= 3 and parts[0].isdigit() and parts[1].isdigit() and parts[2].isdigit():
-            file_date_str = f'{parts[0]}-{parts[1]}-{parts[2]}'
-            try:
-                file_date = datetime.strptime(file_date_str, '%Y-%m-%d')
-                if file_date < cutoff_date:
-                    file_path = os.path.join(LOG_DIR, filename)
-                    file_size = os.path.getsize(file_path)
-                    os.remove(file_path)
-                    stats['deleted'] += 1
-                    stats['freed_bytes'] += file_size
-                    get_logger().info(f'已删除旧日志: {filename}')
-            except ValueError:
-                # 文件名格式不正确，跳过
-                pass
+        # 跳过当前日志文件（没有日期后缀的）
+        if filename == 'typora-watch.log':
+            continue
+
+        # 从文件名中提取日期
+        match = date_pattern.search(filename)
+        if not match:
+            continue
+
+        file_date_str = match.group(1)
+        try:
+            file_date = datetime.strptime(file_date_str, '%Y-%m-%d')
+            if file_date < cutoff_date:
+                file_path = os.path.join(LOG_DIR, filename)
+                file_size = os.path.getsize(file_path)
+                os.remove(file_path)
+                stats['deleted'] += 1
+                stats['freed_bytes'] += file_size
+                get_logger().info(f'已删除旧日志: {filename}')
+        except ValueError:
+            # 文件名格式不正确，跳过
+            pass
 
     if stats['deleted'] > 0:
         get_logger().info(f'日志清理完成: 删除 {stats["deleted"]} 个文件, 释放 {stats["freed_bytes"] / 1024:.1f} KB')
@@ -614,27 +649,43 @@ def create_observer():
     return Observer
 
 
-class WatchdogEventHandler(FileSystemEventHandler):
-    """watchdog 事件处理器适配器"""
+def create_watchdog_handler(md_handler: 'MarkdownEventHandler'):
+    """
+    创建 watchdog 事件处理器
 
-    def __init__(self, handler: MarkdownEventHandler):
-        self.handler = handler
+    延迟定义 WatchdogEventHandler 类，避免模块导入时因 watchdog 未安装而失败
 
-    def on_created(self, event):
-        if not event.is_directory:
-            self.handler.handle_created(event.src_path)
+    Args:
+        md_handler: Markdown 事件处理器实例
 
-    def on_moved(self, event):
-        if not event.is_directory:
-            self.handler.handle_moved(event.src_path, event.dest_path)
+    Returns:
+        watchdog 事件处理器实例
+    """
+    from watchdog.events import FileSystemEventHandler
 
-    def on_deleted(self, event):
-        if not event.is_directory:
-            self.handler.handle_deleted(event.src_path)
+    class WatchdogEventHandler(FileSystemEventHandler):
+        """watchdog 事件处理器适配器"""
 
-    def on_modified(self, event):
-        if not event.is_directory:
-            self.handler.handle_modified(event.src_path)
+        def __init__(self, handler):
+            self.handler = handler
+
+        def on_created(self, event):
+            if not event.is_directory:
+                self.handler.handle_created(event.src_path)
+
+        def on_moved(self, event):
+            if not event.is_directory:
+                self.handler.handle_moved(event.src_path, event.dest_path)
+
+        def on_deleted(self, event):
+            if not event.is_directory:
+                self.handler.handle_deleted(event.src_path)
+
+        def on_modified(self, event):
+            if not event.is_directory:
+                self.handler.handle_modified(event.src_path)
+
+    return WatchdogEventHandler(md_handler)
 
 
 def main():
@@ -759,7 +810,7 @@ def main():
             os.umask(0)
 
     # 设置日志（重新初始化以应用命令行参数）
-    setup_logger(log_to_file=not args.no_log_file)
+    setup_logger(log_to_file=not args.no_log_file, log_retention_days=args.log_retention)
 
     # 写入 PID（前台模式也需要）
     atexit.register(remove_pid_file)
@@ -771,7 +822,8 @@ def main():
     get_logger().info(f'工作空间: {workspace}')
     get_logger().info(f'PID: {os.getpid()}')
     get_logger().info(f'日志目录: {LOG_DIR}')
-    get_logger().info(f'当前日志: {os.path.basename(get_log_file_path())}')
+    get_logger().info(f'日志文件: typora-watch.log (自动按日期轮转)')
+    get_logger().info(f'日志保留: {args.log_retention} 天')
     get_logger().info(f'防抖窗口: {DEBOUNCE_SECONDS} 秒')
     get_logger().info('')
 
@@ -781,18 +833,11 @@ def main():
 
     # 创建 watchdog 事件处理器和观察者
     ObserverClass = create_observer()
-    watchdog_handler = WatchdogEventHandler(md_handler)
+    watchdog_handler = create_watchdog_handler(md_handler)
 
     # 创建观察者
     observer = ObserverClass()
     observer.schedule(watchdog_handler, workspace, recursive=True)
-
-    # 启动前清理旧日志
-    get_logger().info(f'清理旧日志（保留 {args.log_retention} 天）...')
-    try:
-        clean_old_logs(args.log_retention)
-    except Exception as e:
-        get_logger().error(f'日志清理失败: {e}')
 
     # 启动监控
     observer.start()
