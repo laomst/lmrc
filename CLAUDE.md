@@ -25,11 +25,12 @@ ln -s ~/Projects/lmrc ~/lmrc
 
 ## 仓库概述
 
-这是一个个人配置工具仓库 `lmrc` (Laomst's RC)，包含三个主要部分：
+这是一个个人配置工具仓库 `lmrc` (Laomst's RC)，包含四个主要部分：
 
 1. **`bash/`** - Bash Shell 配置（仅限 Linux/macOS）
 2. **`zsh/`** - Zsh Shell 配置（仅限 Linux/macOS）
 3. **`typora/`** - Typora Markdown 编辑器扩展工具（跨平台）
+4. **`auto-hot-key/`** - Windows AutoHotkey 脚本（仅限 Windows）
 
 > **注意：** Windows 用户请使用 WSL (Windows Subsystem for Linux) 或等待后续的 PowerShell 配置支持。
 
@@ -311,6 +312,95 @@ sudo typora/scripts/install-service.sh install
 ### 快捷键
 
 Windows 快捷键配置在 `typora/key_mappings/key-mapping-windows.json`。
+
+---
+
+## 第三部分：AutoHotkey 脚本 (auto-hot-key/)
+
+### 目录结构
+
+```
+auto-hot-key/
+└── laomst-ahk-script.ahk    # AutoHotkey v2.0 脚本
+```
+
+### 什么是 AutoHotkey
+
+**AutoHotkey** 是一款免费、开源的 Windows 自动化脚本语言，允许用户创建简单到复杂的脚本来完成各种任务：
+
+- 定义热键和宏
+- 重新映射按键和按钮
+- 自动纠正输入（AutoText）
+- 表单填写、自动点击
+- 快速原型开发
+
+官方网站：https://www.autohotkey.com/
+
+### 安装与使用
+
+1. 从 [autohotkey.com](https://www.autohotkey.com/) 下载并安装 **AutoHotkey v2.0**
+2. 双击运行 `auto-hot-key/laomst-ahk-script.ahk` 启动脚本
+3. 脚本会在系统托盘中运行，可右键图标退出
+4. （可选）将脚本添加到 Windows 启动项实现开机自启动
+
+### 脚本功能
+
+#### 基础功能
+
+| 功能 | 说明 |
+|------|------|
+| **NumLock 永久开启** | 保持 NumLock 状态始终为开启，防止误触关闭 |
+| **PageUp/PageDown 映射** | PageUp 映射为 Home，PageDown 映射为 End，模拟 macOS 行为 |
+
+#### macOS 风格快捷键
+
+使用 `Alt` 键模拟 macOS 的 `Cmd` 键习惯：
+
+| 快捷键 | 映射到 | 功能 |
+|--------|--------|------|
+| `Alt+C` | `Ctrl+Insert` | 复制 |
+| `Alt+V` | `Shift+Insert` | 粘贴 |
+| `Alt+X` | `Ctrl+X` | 剪切 |
+| `Alt+Z` | `Ctrl+Z` | 撤销 |
+| `Alt+A` | `Ctrl+A` | 全选 |
+| `Alt+S` | `Ctrl+S` | 保存 |
+
+#### CapsLock 防误触机制
+
+- **长按生效**：CapsLock 需要按住 0.5 秒才生效，防止误触
+- **组合键保护**：以下组合键同样需要长按才生效：
+  - `Alt+CapsLock`
+  - `Ctrl+CapsLock`
+  - `Shift+CapsLock`
+
+### 平台支持
+
+| 平台 | 支持 |
+|------|------|
+| Windows | ✅ 原生支持 |
+| Linux | ❌ 需要 AutoHotkey Linux 移植版（如 IronAHK） |
+| macOS | ❌ 可使用 Hammerspoon 或 Keyboard Maestro 等替代工具 |
+| WSL | ❌ 需要在宿主 Windows 系统运行 |
+
+### 脚本开发
+
+如需修改或添加新的热键：
+
+1. 使用文本编辑器打开 `laomst-ahk-script.ahk`
+2. 按照 AutoHotkey v2.0 语法编写规则
+3. 保存后双击运行，或右键托盘图标选择 "Reload This Script"
+
+**示例语法：**
+```autohotkey
+; 简单热键
+^a::MsgBox "你按下了 Ctrl+A"
+
+; 重新映射键
+b::a  ; 按下 b 时发送 a
+
+; 组合键
+^!s::Send "^s"  ; Ctrl+Alt+S 发送 Ctrl+S
+```
 
 ---
 
