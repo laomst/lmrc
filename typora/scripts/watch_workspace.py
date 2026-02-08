@@ -7,8 +7,8 @@ Typora 工作空间文件监控服务
 监控事件：
 - 新建 .md 文件 → 自动添加 front matter 和索引
 - 移动 .md 文件 → 自动更新 typora-root-url 和索引
-- 修改 .md 文件 → 仅记录日志，不做操作（识别先删后建的修改行为）
-- 删除 .md 文件 → 从索引中移除并删除对应的 assets 目录（延迟1秒确认）
+- 修改 .md 文件 → 仅记录日志，不做操作
+- 删除 .md 文件 → 从索引中移除（不删除 assets 目录）
 
 防抖机制：
 - 同一文件的同一事件在 10 秒内仅触发一次
@@ -16,7 +16,7 @@ Typora 工作空间文件监控服务
 - 支持的事件类型：created、moved、deleted、modified
 
 依赖管理：
-- 启动时自动检查并安装必要的依赖（send2trash、watchdog）
+- 启动时自动检查并安装必要的依赖（watchdog）
 - 如果自动安装失败，会提示手动安装命令
 
 使用方式：
@@ -112,12 +112,11 @@ def check_and_install_dependencies() -> None:
     """
     检查并安装必要的依赖
 
-    检查 send2trash 和 watchdog 是否安装，如果没有则自动安装
+    检查 watchdog 是否安装，如果没有则自动安装
     """
     import subprocess
 
     dependencies = {
-        'send2trash': 'send2trash',
         'watchdog': 'watchdog',
     }
 
@@ -242,9 +241,6 @@ setup_logger()
 # 防抖时间窗口（秒）
 DEBOUNCE_SECONDS = 10
 
-# 删除确认时间窗口（秒）：超过此时间未重新创建则确认为真删除
-DELETE_CONFIRM_SECONDS = 1
-
 
 class DebounceManager:
     """
@@ -334,9 +330,6 @@ class MarkdownEventHandler:
         # 记录最近移动的文件 {dest_path: timestamp}
         # 用于防止移动后立即触发的 created 事件
         self._recently_moved: Dict[str, float] = {}
-        # 记录待确认的删除 {file_path: timestamp}
-        # 用于区分"修改（先删后建）"和"真删除"
-        self._pending_deletes: Dict[str, float] = {}
 
     def is_markdown_file(self, path: str) -> bool:
         """检查是否为 Markdown 文件"""
@@ -348,6 +341,7 @@ class MarkdownEventHandler:
 
         跳过条件：
         - 文件名以 "Untitled" 开头（Typora 未命名的新建文件）
+        - 文件名包含 "冲突文件"
 
         注：备份文件（格式: test~.md）在事件处理方法中直接检查，不在此处
 
@@ -359,6 +353,8 @@ class MarkdownEventHandler:
         """
         filename = os.path.basename(path)
         if filename.startswith('Untitled'):
+            return True
+        if '冲突文件' in filename:
             return True
         return False
 
@@ -379,36 +375,6 @@ class MarkdownEventHandler:
         for key in expired_keys:
             del self._recently_moved[key]
 
-    def _cleanup_pending_deletes(self, current_time: float = None):
-        """
-        清理过期的待确认删除记录，执行真正的删除
-
-        Args:
-            current_time: 当前时间戳（如果为 None 则使用当前时间）
-        """
-        if current_time is None:
-            current_time = time.time()
-
-        expired_keys = [
-            path for path, timestamp in self._pending_deletes.items()
-            if current_time - timestamp >= DELETE_CONFIRM_SECONDS
-        ]
-
-        for path in expired_keys:
-            # 超过确认时间，执行真正的删除
-            get_logger().info(f'确认删除文件: {path}')
-            try:
-                removed = remove_from_index(self.workspace_path, path)
-                if removed:
-                    get_logger().info(f'  ✓ 已从索引中移除')
-                else:
-                    get_logger().info(f'  - 文件不在索引中')
-            except Exception as e:
-                get_logger().error(f'  ✗ 处理失败: {e}')
-            finally:
-                # 清除待确认记录
-                del self._pending_deletes[path]
-
     def handle_created(self, file_path: str):
         """处理新建文件"""
         # 先检查是否为备份文件（格式: test~.md）
@@ -421,19 +387,13 @@ class MarkdownEventHandler:
 
         current_time = time.time()
 
-        # 先检查是否为待确认删除的文件（即"修改"操作）
-        pending_time = self._pending_deletes.get(file_path, 0)
-        if current_time - pending_time < DELETE_CONFIRM_SECONDS:
-            get_logger().info(f'[忽略][修改] 检测到文件修改（先删后建）: {file_path}')
-            # 清除待确认删除记录
-            self._pending_deletes.pop(file_path, None)
-            # 清理其他过期的待确认删除
-            self._cleanup_pending_deletes(current_time)
-            return
-
         # 检查是否应该跳过
         if self.should_skip_file(file_path):
-            get_logger().info(f'[忽略][新建] Untitled 文件: {file_path}')
+            filename = os.path.basename(file_path)
+            if filename.startswith('Untitled'):
+                get_logger().info(f'[忽略][新建] Untitled 文件: {file_path}')
+            elif '冲突文件' in filename:
+                get_logger().info(f'[忽略][新建] 冲突文件: {file_path}')
             return
 
         # 检查是否为最近移动的文件（防止移动后触发 created 事件）
@@ -446,7 +406,6 @@ class MarkdownEventHandler:
 
         # 清理过期的记录
         self._cleanup_moved_records(current_time)
-        self._cleanup_pending_deletes(current_time)
 
         # 防抖检查
         if not self.debounce.should_process('created', file_path):
@@ -491,7 +450,11 @@ class MarkdownEventHandler:
 
         # 检查是否应该跳过
         if self.should_skip_file(dest_path):
-            get_logger().info(f'[忽略][移动] Untitled 文件: {src_path} → {dest_path}')
+            filename = os.path.basename(dest_path)
+            if filename.startswith('Untitled'):
+                get_logger().info(f'[忽略][移动] Untitled 文件: {src_path} → {dest_path}')
+            elif '冲突文件' in filename:
+                get_logger().info(f'[忽略][移动] 冲突文件: {src_path} → {dest_path}')
             return
 
         get_logger().info(f'检测到文件移动: {src_path} → {dest_path}')
@@ -527,7 +490,11 @@ class MarkdownEventHandler:
 
         # 检查是否应该跳过
         if self.should_skip_file(file_path):
-            get_logger().info(f'[忽略][删除] Untitled 文件: {file_path}')
+            filename = os.path.basename(file_path)
+            if filename.startswith('Untitled'):
+                get_logger().info(f'[忽略][删除] Untitled 文件: {file_path}')
+            elif '冲突文件' in filename:
+                get_logger().info(f'[忽略][删除] 冲突文件: {file_path}')
             return
 
         get_logger().info(f'检测到删除文件: {file_path}')
@@ -537,10 +504,15 @@ class MarkdownEventHandler:
             get_logger().debug(f'[防抖] 跳过重复的 deleted 事件: {file_path}')
             return
 
-        # 不立即删除，而是记录到待确认列表
-        # 等待 1 秒，如果期间有同名文件创建，则是"修改"操作
-        self._pending_deletes[file_path] = time.time()
-        get_logger().info(f'  加入待确认删除列表，等待 {DELETE_CONFIRM_SECONDS} 秒确认')
+        # 直接从索引中移除
+        try:
+            removed = remove_from_index(self.workspace_path, file_path)
+            if removed:
+                get_logger().info(f'  ✓ 已从索引中移除')
+            else:
+                get_logger().info(f'  - 文件不在索引中')
+        except Exception as e:
+            get_logger().error(f'  ✗ 处理失败: {e}')
 
     def handle_modified(self, file_path: str):
         """处理文件修改（仅记录日志，不做操作）"""
@@ -554,7 +526,11 @@ class MarkdownEventHandler:
 
         # 检查是否应该跳过
         if self.should_skip_file(file_path):
-            get_logger().info(f'[忽略][修改] Untitled 文件: {file_path}')
+            filename = os.path.basename(file_path)
+            if filename.startswith('Untitled'):
+                get_logger().info(f'[忽略][修改] Untitled 文件: {file_path}')
+            elif '冲突文件' in filename:
+                get_logger().info(f'[忽略][修改] 冲突文件: {file_path}')
             return
 
         get_logger().info(f'检测到文件修改: {file_path}')
@@ -563,10 +539,6 @@ class MarkdownEventHandler:
         if not self.debounce.should_process('modified', file_path):
             get_logger().debug(f'[防抖] 跳过重复的 modified 事件: {file_path}')
             return
-
-        # 清理过期的待确认删除（modified 事件表示文件仍存在）
-        current_time = time.time()
-        self._cleanup_pending_deletes(current_time)
 
         get_logger().info(f'  仅记录日志，不做处理')
 

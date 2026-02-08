@@ -687,9 +687,8 @@ def remove_from_index(workspace_path: str, file_path: str) -> bool:
             to_delete.append(serial)
             removed = True
 
-    # 先删除 assets 目录，再从索引中移除
+    # 仅从索引中移除（不再删除 assets 目录）
     for serial in to_delete:
-        _remove_assets_dir(abs_workspace, serial)
         del index_data[serial]
 
     if removed:
