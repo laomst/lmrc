@@ -26,7 +26,7 @@
     --bg-code-block: #212425;
     --bg-code-block-light: #F8F8F8;
     --bg-code-gutter: #0d0e0f;
-    --bg-inline-code: #f8f8f8;
+    --bg-inline-code: #CCC;
     --bg-footnote: #f8f8f8;
     --bg-table-row-alt: #fafafa;
     --bg-table-header: #f2f2f2;
@@ -38,6 +38,7 @@
     --bg-cm-selection: rgba(255, 255, 255, 0.1);
     --bg-cm-active-line: rgba(255, 255, 255, 0.1);
     --bg-article-end: wheat;
+    --bg-meta-header: #e0e0e0;
 
     /* --------------------------------------------------
        文字颜色

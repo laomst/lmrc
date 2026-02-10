@@ -28,7 +28,7 @@
     --select-text-bg-color: var(--bg-selection);
     --side-bar-bg-color: var(--bg-sidebar);
     --control-text-color: var(--text-control);
-    --my-favorate-fonts: 'Monaco', 'Monaco Nert Font','PingFang SC', 'Microsoft YaHei', monospace;
+    --my-favorate-fonts: 'Monaco', 'Monaco Nert Font', 'PingFang SC', 'Microsoft YaHei', monospace;
 }
 
 html {
@@ -76,7 +76,7 @@ body {
     line-height: 20px;
 }
 
-#write>p:first-child:empty {
+#write > p:first-child:empty {
     position: static;
 }
 
@@ -86,7 +86,7 @@ body {
 }
 
 /* 最后一个提示框渲染成文章引用，要求所有文章格式都固定成这样 */
-#write>div:last-of-type.md-alert[mdtype="blockquote"] {
+#write > div:last-of-type.md-alert[mdtype="blockquote"] {
     background-color: var(--bg-blockquote-ref);
     border-top: solid;
     margin-left: -30px;
@@ -96,11 +96,11 @@ body {
     padding-bottom: 1rem;
 }
 
-#write>div:last-of-type.md-alert[mdtype="blockquote"] .md-alert-text-container::after {
+#write > div:last-of-type.md-alert[mdtype="blockquote"] .md-alert-text-container::after {
     content: "references";
 }
 
-#write>div:last-of-type.md-alert[mdtype="blockquote"]::before {
+#write > div:last-of-type.md-alert[mdtype="blockquote"]::before {
     content: "文章引用";
     position: absolute;
     font-size: 12px;
@@ -113,13 +113,49 @@ body {
     line-height: 20px;
 }
 
-#write>div:last-of-type.md-alert[mdtype="blockquote"]>:last-child {
+#write > div:last-of-type.md-alert[mdtype="blockquote"] > :last-child {
     margin-bottom: unset !important;
 }
 
 /* mermaid预览框位置调整 */
-pre.md-fences-advanced.md-focus .md-fences-adv-panel{
+pre.md-fences-advanced.md-focus .md-fences-adv-panel {
     position: unset;
+}
+
+/* YAML front matter 样式 */
+#write pre.md-meta-block {
+    font-family: var(--my-favorate-fonts), monospace;
+    background-color: var(--bg-inline-code);
+    color: var(--text-primary);
+    padding: 0.8rem 1rem;
+    border-radius: 4px;
+    margin: 1rem 0 1rem 0;
+    margin-top: 2.8rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    position: relative;
+    font-size: .8rem;
+    min-height: .8rem;
+    display: inline-table;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.md-meta-block::before {
+    content: "YAML Front Matter";
+    position: absolute;
+    top: -1.6rem;
+    left: 0;
+    padding: 0.2rem 1rem;
+    font-size: 0.7rem;
+    color: var(--text-primary);
+    background-color: var(--bg-meta-header);
+    border-bottom: 1px solid var(--border-table);
+    border-radius: 4px 4px 0 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    line-height: 1.2rem;
 }
 
 @media print {

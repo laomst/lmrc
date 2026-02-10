@@ -149,4 +149,24 @@
     font-family: var(--my-favorate-fonts), serif;
     font-size: 0.85rem;
     word-wrap: normal;
+    position: relative;
+    margin-top: 2.8rem !important;
+    padding-top: 0 !important;
+}
+
+.md-fences::before {
+    content: attr(lang);
+    position: absolute;
+    top: -1.6rem;
+    left: 0;
+    height: 1.8rem;
+    padding: 0.1rem 1rem;
+    font-size: 0.7rem;
+    color: var(--text-primary);
+    background-color: var(--bg-meta-header);
+    border-bottom: 1px solid var(--border-table);
+    border-radius: 4px 4px 0 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    line-height: 1.2rem;
 }
