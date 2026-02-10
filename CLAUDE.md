@@ -178,8 +178,9 @@ typora/
 │       ├── front_matter.py         # Front matter 处理
 │       └── logger.py               # 日志配置
 ├── themes/                     # Typora CSS 主题
-│   ├── vue-laomst/             # 亮色主题（模块化 CSS）
-│   └── vue-laomst-dark/        # 暗色主题
+│   ├── CLAUDE.md                 # 主题说明文档
+│   ├── vue-laomst.css            # 主题入口文件
+│   └── vue-laomst/               # 主题模块目录（模块化 CSS）
 ├── key_mappings/               # 快捷键配置
 │   └── key-mapping-windows.json
 └── service-install/            # 服务安装文档
@@ -276,14 +277,18 @@ sudo typora/scripts/install-service.sh install
 
 #### 主题架构
 
-**亮色主题：** `typora/themes/vue-laomst/`
-**暗色主题：** `typora/themes/vue-laomst-dark/`
+**入口文件：**
+- `vue-laomst.css` - 亮色主题入口
+- `vue-laomst-dark.css` - 暗黑主题入口
 
-**入口文件：** `vue-laomst.css` - 导入所有 CSS 模块并定义核心 CSS 自定义属性
+**主题目录：** `typora/themes/vue-laomst/`
 
-**模块化组件：**
-| 模块 | 功能 |
+**文件结构：**
+| 文件 | 功能 |
 |------|------|
+| `index.css` | 全局公共样式 |
+| `default-color-theme.css` | 亮色主题颜色变量 |
+| `dark-color-theme.css` | 暗黑主题颜色变量 |
 | `font-family/` | Monaco 字体（base64 编码） |
 | `headline/` | 标题样式（CSS 计数器实现层级编号） |
 | `blockquote/` | 引用块样式（含标题变体） |
@@ -296,18 +301,44 @@ sudo typora/scripts/install-service.sh install
 | `outline/` | 文档大纲样式 |
 | `heigh-light/` | 文本高亮 |
 
+**主题加载顺序：**
+1. 颜色主题 (`default-color-theme.css` 或 `dark-color-theme.css`)
+2. 全局样式 (`index.css`)
+
 #### 安装主题
 
-1. 复制主题文件夹到 Typora 主题目录：
-   - macOS: `~/Library/Application Support/abnerworks.Typora/themes/`
-   - Windows: `%APPDATA%\Typora\themes\`
-2. 重启 Typora 并选择主题
+**方式一：使用软连接（推荐）**
+
+软连接方式可以实时同步主题更改，无需重复复制：
+
+```bash
+# macOS/Linux
+cd ~/Library/Application\ Support/abnerworks.Typora/themes/
+ln -s ~/lmrc/typora/themes/vue-laomst.css vue-laomst.css
+ln -s ~/lmrc/typora/themes/vue-laomst-dark.css vue-laomst-dark.css
+ln -s ~/lmrc/typora/themes/vue-laomst vue-laomst
+```
+
+**方式二：复制文件**
+
+```bash
+# 复制入口文件和主题模块目录
+cp ~/lmrc/typora/themes/vue-laomst.css ~/Library/Application\ Support/abnerworks.Typora/themes/
+cp ~/lmrc/typora/themes/vue-laomst-dark.css ~/Library/Application\ Support/abnerworks.Typora/themes/
+cp -r ~/lmrc/typora/themes/vue-laomst ~/Library/Application\ Support/abnerworks.Typora/themes/
+```
+
+**Windows 用户：** 将文件复制到 `%APPDATA%\Typora\themes\` 目录
+
+完成后重启 Typora 并从主题菜单中选择对应主题。
 
 #### 切换样式变体
 
-编辑模块的索引文件（如 `code-block/code-block.css`），修改 `@import` 语句指向不同的变体文件。
+编辑模块的索引文件（如 `vue-laomst/code-block/code-block.css`），修改 `@import` 语句指向不同的变体文件。
 
 **无需构建过程** - CSS 文件直接被 Typora 使用。
+
+> 详细的主题开发文档请参阅：`typora/themes/CLAUDE.md`
 
 ### 快捷键
 

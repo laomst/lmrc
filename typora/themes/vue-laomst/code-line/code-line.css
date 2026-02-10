@@ -9,6 +9,6 @@ code {
     border-radius: 2px;
     font-family: var(--my-favorate-fonts);
     font-size: 0.92rem;
-    color: #e96900;
-    background-color: #f8f8f8;
+    color: var(--text-inline-code);
+    background-color: var(--bg-inline-code);
 }

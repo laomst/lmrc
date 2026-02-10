@@ -1,0 +1,101 @@
+/* ==================================================
+   vue-laomst-dark 暗黑颜色主题
+   ================================================== */
+
+:root {
+    /* --------------------------------------------------
+       基础颜色
+       -------------------------------------------------- */
+    --color-vue-green: #42b983;
+    --color-vue-green-rgb: 66, 185, 131;
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --color-dark-gray: #cccccc;
+    --color-medium-gray: #c0c3c8;
+    --color-gray-text: #999;
+    --color-border-gray: #3e4451;
+    --color-shadow-gray: rgb(102, 102, 102);
+    --color-box-shadow: rgb(0, 0, 0);
+    --color-focus-border: rgba(255, 255, 255, 0.12);
+
+    /* --------------------------------------------------
+       背景色
+       -------------------------------------------------- */
+    --bg-body: #1e1e1e;
+    --bg-sidebar: #252526;
+    --bg-code-block: #2d2d2d;
+    --bg-code-block-light: #2d2d2d;
+    --bg-code-gutter: #1e1e1e;
+    --bg-inline-code: #3a3a3a;
+    --bg-footnote: #2d2d2d;
+    --bg-table-row-alt: #2a2a2a;
+    --bg-table-header: #3a3a3a;
+    --bg-blockquote: rgba(66, 185, 131, .15);
+    --bg-blockquote-ref: #1a2f28;
+    --bg-list-header: #3d3d2a;
+    --bg-highlight: #5c5c00;
+    --bg-selection: #2c5c8a;
+    --bg-cm-selection: rgba(255, 255, 255, 0.15);
+    --bg-cm-active-line: rgba(255, 255, 255, 0.08);
+    --bg-article-end: #4a4a3a;
+
+    /* --------------------------------------------------
+       文字颜色
+       -------------------------------------------------- */
+    --text-body: #c0c3c8;
+    --text-primary: #e0e0e0;
+    --text-secondary: #999;
+    --text-on-header: rgb(255, 255, 255);
+    --text-on-bg-badge: #ffffff;
+    --text-on-counter: #e0e0e0;
+    --text-link: #42b983;
+    --text-inline-code: #e09b40;
+    --text-footnote: #e09b40;
+    --text-highlight: #ffffff;
+    --text-control: #cccccc;
+    --text-counter-label: #e0e0e0;
+
+    /* --------------------------------------------------
+       代码块颜色 (暗黑 gitlib 主题)
+       -------------------------------------------------- */
+    --cm-text: #c0c3c8;
+    --cm-gutter-text: #6e7681;
+    --cm-cursor: #528bff;
+    --cm-selection: #2c5c8a;
+    --cm-comment: #6e7681;
+    --cm-string: #98c379;
+    --cm-number: #d19a66;
+    --cm-variable: #e06c75;
+    --cm-def: #61afef;
+    --cm-operator: #56b6c2;
+    --cm-keyword: #c678dd;
+    --cm-atom: #d19a66;
+    --cm-meta: #abb2bf;
+    --cm-tag: #e06c75;
+    --cm-attribute: #d19a66;
+    --cm-qualifier: #56b6c2;
+    --cm-property: #d19a66;
+    --cm-builtin: #e5c07b;
+    --cm-type: #e06c75;
+    --cm-matching-bracket: #528bff;
+
+    /* --------------------------------------------------
+       边框颜色
+       -------------------------------------------------- */
+    --border-code-block: #3e4451;
+    --border-table: #3e4451;
+    --border-code-gutter: #3e4451;
+
+    /* --------------------------------------------------
+       标题渐变
+       -------------------------------------------------- */
+    --header-gradient-start: rgb(0, 150, 170);
+    --header-gradient-end: rgb(50, 60, 140);
+    --header-border-left: rgb(80, 80, 80);
+
+    /* --------------------------------------------------
+       特殊颜色
+       -------------------------------------------------- */
+    --badge-bg: #3a3a3a;
+    --outline-badge-bg: #3a3a3a;
+}

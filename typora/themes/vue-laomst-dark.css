@@ -1,9 +1,9 @@
 /* ==================================================
-   vue-laomst 亮色主题入口文件
+   vue-laomst-dark 暗黑主题入口文件
    ================================================== */
 
-/* 颜色主题 - 亮色版本 */
-@import 'vue-laomst/default-color-theme.css';
+/* 颜色主题 - 暗黑版本 */
+@import 'vue-laomst/dark-color-theme.css';
 
 /* 全局样式 */
 @import 'vue-laomst/index.css';

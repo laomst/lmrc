@@ -54,7 +54,7 @@ li > h6 {
     border-radius: 3px;
     /* 选择器的优先级不够，只能加 !important */
     margin-top: 17px !important;
-    background-color: blanchedalmond;
+    background-color: var(--bg-list-header);
 }
 
 /*blockquote ul h1,

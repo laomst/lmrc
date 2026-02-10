@@ -1,0 +1,101 @@
+/* ==================================================
+   vue-laomst 默认颜色主题
+   ================================================== */
+
+:root {
+    /* --------------------------------------------------
+       基础颜色
+       -------------------------------------------------- */
+    --color-vue-green: #42b983;
+    --color-vue-green-rgb: 66, 185, 131;
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --color-dark-gray: #222;
+    --color-medium-gray: #34495e;
+    --color-gray-text: #777;
+    --color-border-gray: #dfe2e5;
+    --color-shadow-gray: rgb(51, 51, 51);
+    --color-box-shadow: rgb(102, 102, 102);
+    --color-focus-border: rgba(85, 85, 85, 0.12);
+
+    /* --------------------------------------------------
+       背景色
+       -------------------------------------------------- */
+    --bg-body: #ffffff;
+    --bg-sidebar: #fff;
+    --bg-code-block: #212425;
+    --bg-code-block-light: #F8F8F8;
+    --bg-code-gutter: #0d0e0f;
+    --bg-inline-code: #f8f8f8;
+    --bg-footnote: #f8f8f8;
+    --bg-table-row-alt: #fafafa;
+    --bg-table-header: #f2f2f2;
+    --bg-blockquote: rgba(66, 185, 131, .1);
+    --bg-blockquote-ref: #EFF8F3;
+    --bg-list-header: blanchedalmond;
+    --bg-highlight: #e5e900;
+    --bg-selection: #5590F9;
+    --bg-cm-selection: rgba(255, 255, 255, 0.1);
+    --bg-cm-active-line: rgba(255, 255, 255, 0.1);
+    --bg-article-end: wheat;
+
+    /* --------------------------------------------------
+       文字颜色
+       -------------------------------------------------- */
+    --text-body: #34495e;
+    --text-primary: #34495e;
+    --text-secondary: #777;
+    --text-on-header: rgb(255, 255, 255);
+    --text-on-bg-badge: #ffffff;
+    --text-on-counter: #000;
+    --text-link: #42b983;
+    --text-inline-code: #e96900;
+    --text-footnote: #e96900;
+    --text-highlight: #222;
+    --text-control: rgb(49, 47, 47);
+    --text-counter-label: #000;
+
+    /* --------------------------------------------------
+       代码块颜色 (gitlib 主题)
+       -------------------------------------------------- */
+    --cm-text: #f8f8f2;
+    --cm-gutter-text: #5c5d5c;
+    --cm-cursor: rgb(96, 255, 96);
+    --cm-selection: #5085F7;
+    --cm-comment: #969896;
+    --cm-string: #e4eb9b;
+    --cm-number: #c7b2e4;
+    --cm-variable: #81a2be;
+    --cm-def: white;
+    --cm-operator: #ff79c6;
+    --cm-keyword: #b294bb;
+    --cm-atom: #bd93f9;
+    --cm-meta: #f8f8f2;
+    --cm-tag: #8abeb7;
+    --cm-attribute: #91eba7;
+    --cm-qualifier: #82ee9d;
+    --cm-property: #81a2be;
+    --cm-builtin: #8ffaaa;
+    --cm-type: #f1c290;
+    --cm-matching-bracket: white;
+
+    /* --------------------------------------------------
+       边框颜色
+       -------------------------------------------------- */
+    --border-code-block: #F4F4F4;
+    --border-table: #dfe2e5;
+    --border-code-gutter: #444;
+
+    /* --------------------------------------------------
+       标题渐变
+       -------------------------------------------------- */
+    --header-gradient-start: rgb(0, 188, 212);
+    --header-gradient-end: rgb(63, 81, 181);
+    --header-border-left: rgb(51, 51, 51);
+
+    /* --------------------------------------------------
+       特殊颜色
+       -------------------------------------------------- */
+    --badge-bg: chocolate;
+    --outline-badge-bg: chocolate;
+}

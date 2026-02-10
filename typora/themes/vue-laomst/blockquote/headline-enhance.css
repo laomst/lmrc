@@ -2,14 +2,14 @@
 
 blockquote {
     margin: 0.8em 0;
-    border-left: 4px solid #42b983;
+    border-left: 4px solid var(--color-vue-green);
     padding: 10px 15px;
-    color: #777;
-    background-color: rgba(66, 185, 131, .1);
+    color: var(--text-secondary);
+    background-color: var(--bg-blockquote);
 }
 
 .on-focus-mode blockquote {
-    border-left-color: rgba(85, 85, 85, 0.12);
+    border-left-color: var(--color-focus-border);
 }
 
 blockquote > h1,
@@ -30,7 +30,7 @@ blockquote > h6 {
     box-shadow: inherit;
     white-space: nowrap;
     overflow-x: auto;
-    border-bottom: 2px solid #42b983;
+    border-bottom: 2px solid var(--color-vue-green);
 }
 
 blockquote > h1 span,
@@ -42,8 +42,8 @@ blockquote > h6 span {
     /*增加对h3标题字体的修改*/
     display: inline-block;
     font-weight: normal;
-    background: #42b983;
-    color: #ffffff;
+    background: var(--color-vue-green);
+    color: var(--text-on-bg-badge);
     padding: 7px 3px;
     border-top-right-radius: 3px;
     border-top-left-radius: 3px;

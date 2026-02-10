@@ -52,12 +52,12 @@ h6 p {
     margin-right: 5px;
     padding: 7px 15px;
     letter-spacing: 2px;
-    background-image: linear-gradient(to right bottom, rgb(0, 188, 212), rgb(63, 81, 181));
-    color: rgb(255, 255, 255);
-    border-left: 10px solid rgb(51, 51, 51);
+    background-image: linear-gradient(to right bottom, var(--header-gradient-start), var(--header-gradient-end));
+    color: var(--text-on-header);
+    border-left: 10px solid var(--header-border-left);
     border-radius: 5px;
-    text-shadow: rgb(102, 102, 102) 1px 1px 1px;
-    box-shadow: rgb(102, 102, 102) 1px 1px 2px;
+    text-shadow: var(--color-box-shadow) 1px 1px 1px;
+    box-shadow: var(--color-box-shadow) 1px 1px 2px;
     line-height: 110%;
     /* 下面三行代码打开之后，标题只会在一行中显示 */
     /* white-space: nowrap; */
@@ -119,8 +119,8 @@ h6.md-focus:before {
 #write>h4::before,
 #write>h5::before,
 #write>h6::before {
-    background-color: chocolate;
-    color: #000;
+    background-color: var(--badge-bg);
+    color: var(--text-counter-label);
     border-radius: 7px;
     position: absolute;
     right: calc(100% + 11px);

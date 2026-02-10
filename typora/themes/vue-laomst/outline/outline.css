@@ -58,9 +58,9 @@
 #outline-content li.outline-h4 span.outline-label:before,
 #outline-content li.outline-h5 span.outline-label:before,
 #outline-content li.outline-h6 span.outline-label:before {
-    background-color: chocolate;
+    background-color: var(--outline-badge-bg);
     margin-right: 5px;
-    color: #000;
+    color: var(--text-counter-label);
     font-weight: bold;
     border-radius: 3px;
     vertical-align: baseline;
