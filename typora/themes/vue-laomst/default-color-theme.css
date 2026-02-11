@@ -1,102 +1,160 @@
 /* ==================================================
-   vue-laomst 默认颜色主题
+   vue-laomst 默认（亮色）颜色主题
+
+   本文件定义所有 CSS 颜色变量，作为主题的基础配色方案。
+   暗黑主题通过引入此文件并覆盖相关变量实现。
    ================================================== */
 
 :root {
-    /* --------------------------------------------------
-       基础颜色
-       -------------------------------------------------- */
+    /* Typora 颜色变量 */
+    --select-text-bg-color: #5590F9; /* 文本选择：鼠标选中文本的背景 */
+    --side-bar-bg-color: #FFF; /* 侧边栏背景：文件大纲、目录等区域 */
+    --control-text-color: rgb(49, 47, 47); /* 控件文字：按钮、输入框等控件内文字 */
+    --text-color: #34495e; /* 文字颜色 */
+    --my-favorate-fonts: 'Monaco', 'Monaco Nert Font', 'PingFang SC', 'Microsoft YaHei', monospace;
+    /* ==================================================
+       一、基础颜色
+       用于派生其他颜色或作为通用颜色参考
+       ================================================== */
+
+    /* Vue.js 品牌绿色 */
     --color-vue-green: #42b983;
-    --color-vue-green-rgb: 66, 185, 131;
-    --color-white: #ffffff;
-    --color-black: #000000;
-    --color-dark-gray: #222;
-    --color-medium-gray: #34495e;
-    --color-gray-text: #777;
-    --color-border-gray: #dfe2e5;
-    --color-shadow-gray: rgb(51, 51, 51);
-    --color-box-shadow: rgb(102, 102, 102);
-    --color-focus-border: rgba(85, 85, 85, 0.12);
+    --color-vue-green-rgb: 66, 185, 131; /* RGB 格式，用于 rgba() 函数 */
 
-    /* --------------------------------------------------
-       背景色
-       -------------------------------------------------- */
-    --bg-body: #ffffff;
-    --bg-sidebar: #fff;
-    --bg-code-block: #212425;
-    --bg-code-block-light: #F8F8F8;
-    --bg-code-gutter: #0d0e0f;
-    --bg-inline-code: #CCC;
-    --bg-footnote: #f8f8f8;
-    --bg-table-row-alt: #fafafa;
-    --bg-table-header: #f2f2f2;
-    --bg-blockquote: rgba(66, 185, 131, .1);
-    --bg-blockquote-ref: #EFF8F3;
-    --bg-list-header: blanchedalmond;
-    --bg-highlight: #e5e900;
-    --bg-selection: #5590F9;
-    --bg-cm-selection: rgba(255, 255, 255, 0.1);
-    --bg-cm-active-line: rgba(255, 255, 255, 0.1);
-    --bg-article-end: wheat;
-    --bg-meta-header: #e0e0e0;
+    /* 黑白基础色 */
+    --color-white: #ffffff; /* 纯白色 */
+    --color-black: #000000; /* 纯黑色 */
 
-    /* --------------------------------------------------
-       文字颜色
-       -------------------------------------------------- */
-    --text-body: #34495e;
-    --text-primary: #34495e;
-    --text-secondary: #777;
-    --text-on-header: rgb(255, 255, 255);
-    --text-on-bg-badge: #ffffff;
-    --text-on-counter: #000;
-    --text-link: #42b983;
-    --text-inline-code: #e96900;
-    --text-footnote: #e96900;
-    --text-highlight: #222;
-    --text-control: rgb(49, 47, 47);
-    --text-counter-label: #000;
+    /* 灰度色阶 */
+    --color-dark-gray: #222; /* 深灰色：用于深色文字 */
+    --color-medium-gray: #34495e; /* 中灰色：用于正文文字 */
+    --color-gray-text: #777; /* 浅灰色：用于次要文字 */
 
-    /* --------------------------------------------------
-       代码块颜色 (gitlib 主题)
-       -------------------------------------------------- */
-    --cm-text: #f8f8f2;
-    --cm-gutter-text: #5c5d5c;
-    --cm-cursor: rgb(96, 255, 96);
-    --cm-selection: #5085F7;
-    --cm-comment: #969896;
-    --cm-string: #e4eb9b;
-    --cm-number: #c7b2e4;
-    --cm-variable: #81a2be;
-    --cm-def: white;
-    --cm-operator: #ff79c6;
-    --cm-keyword: #b294bb;
-    --cm-atom: #bd93f9;
-    --cm-meta: #f8f8f2;
-    --cm-tag: #8abeb7;
-    --cm-attribute: #91eba7;
-    --cm-qualifier: #82ee9d;
-    --cm-property: #81a2be;
-    --cm-builtin: #8ffaaa;
-    --cm-type: #f1c290;
-    --cm-matching-bracket: white;
+    /* 边框与阴影 */
+    --color-border-gray: #dfe2e5; /* 边框灰色：用于表格、分割线等 */
+    --color-shadow-gray: rgb(51, 51, 51); /* 阴影灰色：用于元素阴影效果 */
+    --color-box-shadow: rgb(102, 102, 102); /* 盒阴影色：用于卡片等组件阴影 */
 
-    /* --------------------------------------------------
-       边框颜色
-       -------------------------------------------------- */
-    --border-code-block: #F4F4F4;
-    --border-table: #dfe2e5;
-    --border-code-gutter: #444;
+    /* 交互状态 */
+    --color-focus-border: rgba(85, 85, 85, 0.12); /* 焦点边框：输入框聚焦时的边框颜色 */
 
-    /* --------------------------------------------------
-       标题渐变
-       -------------------------------------------------- */
-    --header-gradient-start: rgb(0, 188, 212);
-    --header-gradient-end: rgb(63, 81, 181);
-    --header-border-left: rgb(51, 51, 51);
+    /* ==================================================
+       二、背景色
+       用于各类元素和区域的背景
+       ================================================== */
 
-    /* --------------------------------------------------
-       特殊颜色
-       -------------------------------------------------- */
-    --badge-bg: chocolate;
-    --outline-badge-bg: chocolate;
+    /* 页面主体 */
+    --bg-body: #ffffff; /* 页面背景：编辑区域主背景色 */
+    --bg-content: inherit;
+
+    /* 代码块 */
+    --bg-code-block: #212425; /* 代码块背景：代码块区域背景（深色以突出代码） */
+    --bg-code-block-light: #F8F8F8; /* 代码块浅色背景：部分代码块的备选背景 */
+    --bg-code-gutter: #0d0e0f; /* 代码行号背景：代码块左侧行号区域 */
+    --bg-inline-code: #CCC; /* 行内代码背景：`code` 标签背景色 */
+
+    /* 文档元素 */
+    --bg-footnote: #f8f8f8; /* 脚注背景：脚注区域背景色 */
+    --bg-table-row-alt: #fafafa; /* 表格交替行：表格奇偶行交替背景 */
+    --bg-table-header: #f2f2f2; /* 表头背景：表格标题行背景 */
+    --bg-blockquote: rgba(66, 185, 131, .1); /* 引用块背景：blockquote 元素背景 */
+    --bg-blockquote-ref: #EFF8F3; /* 参考文献引用块：特殊引用块背景 */
+    --bg-list-header: blanchedalmond; /* 列表标题背景：特殊列表项背景 */
+    --bg-highlight: #e5e900; /* 高亮背景：==高亮文本== 的背景色 */
+
+    /* 选择与交互 */
+    --bg-cm-selection: rgba(255, 255, 255, 0.1); /* 代码选择：代码块内选择文本背景 */
+    --bg-cm-active-line: rgba(255, 255, 255, 0.1); /* 当前行高亮：代码编辑时当前行背景 */
+
+    /* 特殊区域 */
+    --bg-article-end: wheat; /* 文章结尾标记：页面底部结束标记背景 */
+    --bg-meta-header: #e0e0e0; /* 元数据头部：YAML front matter 等元数据区域 */
+
+    /* ==================================================
+       三、文字颜色
+       用于各类文本内容的颜色
+       ================================================== */
+
+    /* 正文文字 */
+    --text-primary: #34495e; /* 主要文字：标题、重要内容等 */
+    --text-secondary: #777; /* 次要文字：辅助说明、提示等 */
+
+    /* 特定背景上的文字 */
+    --text-on-header: rgb(255, 255, 255); /* 标题上文字：深色背景标题内的文字 */
+    --text-on-bg-badge: #ffffff; /* 徽章上文字：标签、徽章内的文字 */
+    --text-on-counter: #000; /* 计数器文字：列表编号等计数器文字 */
+
+    /* 功能性文字 */
+    --text-link: #42b983; /* 链接文字：超链接颜色（Vue 绿） */
+    --text-inline-code: #e96900; /* 行内代码：`code` 标签文字颜色 */
+    --text-footnote: #e96900; /* 脚注文字：脚注链接颜色 */
+    --text-highlight: #222; /* 高亮文字：==高亮文本== 的文字颜色 */
+
+    /* 控件文字 */
+    --text-counter-label: #000; /* 计数器标签：大纲等处的计数标签 */
+
+    /* ==================================================
+       四、代码块语法高亮 (CodeMirror / gitlib 主题)
+       用于代码块内各种语法元素的颜色
+       ================================================== */
+
+    /* 代码基础 */
+    --cm-text: #f8f8f2; /* 代码文字：代码块默认文字颜色 */
+    --cm-gutter-text: #5c5d5c; /* 行号文字：代码行号颜色 */
+    --cm-cursor: rgb(96, 255, 96); /* 光标：编辑时光标颜色 */
+    --cm-selection: #5085F7; /* 选择：代码内选中文本背景 */
+
+    /* 语法元素 - 注释与字符串 */
+    --cm-comment: #969896; /* 注释*/
+    --cm-string: #e4eb9b; /* 字符串："text" 或 'text' */
+
+    /* 语法元素 - 值与类型 */
+    --cm-number: #c7b2e4; /* 数字：123, 3.14 */
+    --cm-atom: #bd93f9; /* 原子：true, false, null */
+    --cm-type: #f1c290; /* 类型：类型定义（如 TypeScript） */
+
+    /* 语法元素 - 标识符 */
+    --cm-variable: #81a2be; /* 变量：变量名 */
+    --cm-def: white; /* 定义：函数/变量定义时的标识符 */
+    --cm-property: #81a2be; /* 属性：对象属性名 */
+    --cm-builtin: #8ffaaa; /* 内置：语言内置函数/对象 */
+
+    /* 语法元素 - 控制结构 */
+    --cm-operator: #ff79c6; /* 运算符：+, -, =, == 等 */
+    --cm-keyword: #b294bb; /* 关键字：if, else, for, while 等 */
+
+    /* 语法元素 - 标记语言 */
+    --cm-tag: #8abeb7; /* 标签：HTML/XML 标签名 */
+    --cm-attribute: #91eba7; /* 属性：HTML 属性名 */
+    --cm-qualifier: #82ee9d; /* 限定符：CSS 类选择器 */
+
+    /* 语法元素 - 其他 */
+    --cm-meta: #f8f8f2; /* 元数据：预处理指令等 */
+    --cm-matching-bracket: white; /* 匹配括号：高亮显示的匹配括号 */
+
+    /* ==================================================
+       五、边框颜色
+       用于各类元素和区域的边框
+       ================================================== */
+
+    --border-code-block: #F4F4F4; /* 代码块边框：代码块区域边框颜色 */
+    --border-table: #dfe2e5; /* 表格边框：表格单元格边框 */
+    --border-code-gutter: #444; /* 代码行号边框：行号与代码分隔线 */
+
+    /* ==================================================
+       六、标题渐变
+       用于标题样式的渐变效果
+       ================================================== */
+
+    --header-gradient-start: rgb(0, 188, 212); /* 渐变起始色：标题渐变的开始颜色 */
+    --header-gradient-end: rgb(63, 81, 181); /* 渐变结束色：标题渐变的结束颜色 */
+    --header-border-left: rgb(51, 51, 51); /* 标题左边框：标题左侧装饰线颜色 */
+
+    /* ==================================================
+       七、特殊颜色
+       用于特定功能的颜色
+       ================================================== */
+
+    --badge-bg: chocolate; /* 徽章背景：标签、标记的背景色 */
+    --outline-badge-bg: chocolate; /* 大纲徽章：大纲视图中的徽章背景 */
 }

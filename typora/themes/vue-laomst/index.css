@@ -23,21 +23,12 @@
 /* 大纲 */
 @import 'outline/outline.css';
 
-:root {
-    /* 兼容 Typora 的颜色变量 */
-    --select-text-bg-color: var(--bg-selection);
-    --side-bar-bg-color: var(--bg-sidebar);
-    --control-text-color: var(--text-control);
-    --my-favorate-fonts: 'Monaco', 'Monaco Nert Font', 'PingFang SC', 'Microsoft YaHei', monospace;
-}
-
 html {
     font-size: 17px;
 }
 
 body {
     font-family: var(--my-favorate-fonts), serif;
-    color: var(--text-body);
     -webkit-font-smoothing: antialiased;
     line-height: 1.6rem;
     letter-spacing: 0;
