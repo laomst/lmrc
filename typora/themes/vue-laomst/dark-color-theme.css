@@ -19,5 +19,6 @@
     --text-secondary: #aaa;
     --bg-list-header: #77634c; /* 列表标题背景：特殊列表项背景 */
     --text-list-header: #fff;
+    --text-strong: #fff;
     /*--border-code-block: #17171A;*/
 }

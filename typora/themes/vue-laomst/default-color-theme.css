@@ -77,6 +77,7 @@
 
     /* 正文文字 */
     --text-primary: #34495e; /* 主要文字：标题、重要内容等 */
+    --text-strong: inherit;
     --text-secondary: #777; /* 次要文字：辅助说明、提示等 */
 
     /* 特定背景上的文字 */
