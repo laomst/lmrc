@@ -49,7 +49,7 @@
 
     /* 代码块 */
     --bg-code-block: #212425; /* 代码块背景：代码块区域背景（深色以突出代码） */
-    --bg-code-block-light: #F8F8F8; /* 代码块浅色背景：部分代码块的备选背景 */
+    /*--bg-code-block-light: #F8F8F8; !* 代码块浅色背景：部分代码块的备选背景 *!*/
     --bg-code-gutter: #0d0e0f; /* 代码行号背景：代码块左侧行号区域 */
     --bg-inline-code: #CCC; /* 行内代码背景：`code` 标签背景色 */
 
@@ -89,6 +89,7 @@
     --text-inline-code: #e96900; /* 行内代码：`code` 标签文字颜色 */
     --text-footnote: #e96900; /* 脚注文字：脚注链接颜色 */
     --text-highlight: #222; /* 高亮文字：==高亮文本== 的文字颜色 */
+    --text-list-header: inherit;
 
     /* 控件文字 */
     --text-counter-label: #000; /* 计数器标签：大纲等处的计数标签 */
@@ -137,7 +138,7 @@
        用于各类元素和区域的边框
        ================================================== */
 
-    --border-code-block: #F4F4F4; /* 代码块边框：代码块区域边框颜色 */
+    /*--border-code-block: #F4F4F4; !* 代码块边框：代码块区域边框颜色 *!*/
     --border-table: #dfe2e5; /* 表格边框：表格单元格边框 */
     --border-code-gutter: #444; /* 代码行号边框：行号与代码分隔线 */
 

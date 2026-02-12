@@ -55,6 +55,7 @@ li > h6 {
     /* 选择器的优先级不够，只能加 !important */
     margin-top: 17px !important;
     background-color: var(--bg-list-header);
+    color: var(--text-list-header);
 }
 
 /*blockquote ul h1,
