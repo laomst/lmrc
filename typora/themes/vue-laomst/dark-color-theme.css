@@ -20,5 +20,7 @@
     --bg-list-header: #77634c; /* 列表标题背景：特殊列表项背景 */
     --text-list-header: #fff;
     --text-strong: #fff;
+    --bg-table-row-alt: #2E3033; /* 表格交替行：表格奇偶行交替背景 */
+    --bg-table-header: #222; /* 表头背景：表格标题行背景 */
     /*--border-code-block: #17171A;*/
 }
