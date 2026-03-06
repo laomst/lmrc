@@ -1,0 +1,26 @@
+/* ==================================================
+   vue-laomst-dark 暗黑颜色主题
+
+   通过引入默认颜色主题，并覆盖需要调整的变量实现。
+   仅覆盖背景色（深色）和文字颜色（浅色）相关的变量。
+   ================================================== */
+
+/* 引入默认颜色主题作为基础 */
+@import 'default-color-theme.css';
+
+:root {
+    --side-bar-bg-color: #2E3033; /* 侧边栏背景：文件大纲、目录等区域 */
+    --bg-body: #17171A; /* 页面背景：编辑区域主背景色 */
+    --text-color: #b8bfc6; /* 文字颜色 */
+    --bg-color: #363B40;
+    --control-text-color: #b7b7b7;
+    --control-text-hover-color: #eee;
+    --active-file-bg-color: rgb(34, 34, 34);
+    --text-secondary: #aaa;
+    --bg-list-header: #77634c; /* 列表标题背景：特殊列表项背景 */
+    --text-list-header: #fff;
+    --text-strong: #fff;
+    --bg-table-row-alt: #2E3033; /* 表格交替行：表格奇偶行交替背景 */
+    --bg-table-header: #222; /* 表头背景：表格标题行背景 */
+    /*--border-code-block: #17171A;*/
+}

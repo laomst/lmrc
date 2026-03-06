@@ -1,0 +1,5 @@
+/* 脚注的样式 */
+#write .md-footnote {
+    background-color: var(--bg-footnote);
+    color: var(--text-footnote);
+}

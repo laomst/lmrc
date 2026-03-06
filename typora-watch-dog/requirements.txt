@@ -1,0 +1,4 @@
+# Typora 扩展工具依赖
+
+# 文件系统监控（用于 watch_workspace.py）
+watchdog>=4.0.0

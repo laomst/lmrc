@@ -1,0 +1,8 @@
+/* 超链接样式 */
+
+a {
+    color: var(--text-link);
+    font-weight: 600;
+    padding: 0 2px;
+    text-decoration: none;
+}

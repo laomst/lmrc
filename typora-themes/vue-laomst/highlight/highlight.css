@@ -1,0 +1,10 @@
+/* 高亮样式 */
+
+#write mark {
+    background-color: var(--bg-highlight);
+    border-radius: 2px;
+    padding: 2px 4px;
+    margin: 0 2px;
+    color: var(--text-highlight);
+    font-weight: 500;
+}
