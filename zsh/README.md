@@ -89,8 +89,9 @@ include.zsh          ← 预加载（INI 解析器、工具函数）
 index.zsh               # 入口文件
 include.zsh             # 预加载 includes/ 目录
 includes/
-  01-loader.zsh         # INI 解析器，提供 load_script / load_section
-  02-prompt-select.zsh  # 交互式选择菜单（prompt-select）
+  01-common.zsh         # 公共工具函数（check-env-exists 等）
+  02-loader.zsh         # INI 解析器，提供 load_script / load_section
+  03-prompt-select.zsh  # 交互式选择菜单（prompt-select）
 includes.ini            # 扩展脚本配置（机器相关）
 includes_example.ini    # 配置模板
 exports.zsh             # 环境变量

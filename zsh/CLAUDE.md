@@ -26,12 +26,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `includes.ini` 是机器相关的配置（不应提交），`includes_example.ini` 是模板
 - INI 格式：`[section_name]` 下列出绝对路径，每行一个脚本
 - 支持 `~` 和 `$HOME` 展开，不存在的文件静默跳过
-- 解析逻辑在 `includes/01-loader.zsh`，提供 `load_script()` 和 `load_section()` 两个工具函数
+- 解析逻辑在 `includes/02-loader.zsh`，提供 `load_script()` 和 `load_section()` 两个工具函数
 
 ### 目录结构
 
 - `functions/` — 按编号分类的工具函数（01-fs, 02-network, 03-git 等），由 `function.zsh` 自动加载目录下所有 `*.zsh`
-- `includes/` — 预加载模块（INI 解析器、prompt-select 交互菜单），由 `include.zsh` 在 index.zsh 最开始加载
+- `includes/` — 预加载模块（公共工具函数、INI 解析器、prompt-select 交互菜单），由 `include.zsh` 在 index.zsh 最开始加载
 
 ## 编码约定
 

@@ -44,7 +44,8 @@ pre_others  → 其余 *.ps1   → post_others → post_all
 |------|------|
 | `index.ps1` | 入口文件，定义六阶段加载流程 |
 | `include.ps1` | 预加载器，加载 `includes/` 目录下的模块 |
-| `includes/01-loader.ps1` | INI 解析器，提供 `Load-LmrcScript` / `Load-LmrcSection` |
+| `includes/01-common.ps1` | 公共工具函数（`Check-EnvExists` 等） |
+| `includes/02-loader.ps1` | INI 解析器，提供 `Load-LmrcScript` / `Load-LmrcSection` |
 | `exports.ps1` | 环境变量配置（SDK 路径等） |
 | `path.ps1` | PATH 环境变量管理 |
 | `function.ps1` | 函数加载器（自动加载 `functions/` 目录） |
